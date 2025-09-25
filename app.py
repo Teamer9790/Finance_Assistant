@@ -126,22 +126,27 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
     return result
 
 
-# ---------------- STYLING ----------------
-# ---------------- STYLING ----------------
 def add_css():
     st.markdown(
         """
         <style>
-        .stApp {
-            background-image: url("https://images.pexels.com/photos/11177799/pexels-photo-11177799.jpeg?cs=srgb&dl=pexels-merlin-11177799.jpg&fm=jpg");
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        body {
+            background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
             background-size: cover;
             background-repeat: no-repeat;
-            background-attachment: scroll !important;  /* ✅ makes wallpaper move with page */
+            background-attachment: scroll;  /* ✅ now scrolls with content */
+        }
+        .stApp {
+            background: transparent; /* prevent Streamlit from overriding */
         }
 
         h1, h2, h3, p, label {
             color: white !important;
-            text-shadow: 1px 1px 2px black; /* 🔹 improves visibility */
+            text-shadow: 1px 1px 2px black;
         }
 
         .title-banner {
@@ -159,19 +164,18 @@ def add_css():
         }
 
         .recommendation {
-            background: rgba(255, 255, 255, 0.9); /* 🔹 semi-white */
+            background: rgba(255, 255, 255, 0.9);
             border-left: 5px solid #4CAF50;
             padding: 10px 15px;
             margin: 8px 0;
             border-radius: 6px;
             font-size: 0.95rem;
-            color: black; /* 🔹 dark text */
+            color: black;
         }
         </style>
         """,
         unsafe_allow_html=True
     )
-
 
 # ---------------- MAIN APP ----------------
 def main():
