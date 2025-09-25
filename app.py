@@ -132,11 +132,12 @@ def add_css():
         """
         <style>
         .stApp {
-            background-image: url("https://fastly.picsum.photos/id/48/5000/3333.jpg?hmac=y3_1VDNbhii0vM_FN6wxMlvK27vFefflbUSH06z98so");
-            background-size: cover;
-            background-attachment: scroll; /* 🔹 image scrolls with page */
+        background-image: url("https://fastly.picsum.photos/id/48/5000/3333.jpg?hmac=y3_1VDNbhii0vM_FN6wxMlvK27vFefflbUSH06z98so");
+        background-size: cover;
+        background-attachment: scroll; /* ✅ makes it scroll */
+        background-repeat: no-repeat;
         }
-
+        
         h1, h2, h3, p, label {
             color: white !important;
             text-shadow: 1px 1px 2px black; /* 🔹 improves visibility */
