@@ -131,23 +131,15 @@ def add_css():
     st.markdown(
         """
         <style>
-        /* Apply background to the main scrollable container */
-        .main {
-            background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-attachment: scroll; /* ✅ will move when page scrolls */
-            background-position: center top;
-        }
-
-        /* Keep content area transparent */
-        .block-container {
-            background: transparent !important;
-        }
-
+        .stApp {
+                background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
+                background-size: cover;
+                background-repeat: no-repeat;
+                background-attachment: fixed !important;  /* Force scrolling bg */
+                }
         h1, h2, h3, p, label {
             color: white !important;
-            text-shadow: 1px 1px 2px black;
+            text-shadow: 1px 1px 2px black; /* 🔹 improves visibility */
         }
 
         .title-banner {
@@ -165,13 +157,13 @@ def add_css():
         }
 
         .recommendation {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.9); /* 🔹 semi-white */
             border-left: 5px solid #4CAF50;
             padding: 10px 15px;
             margin: 8px 0;
             border-radius: 6px;
             font-size: 0.95rem;
-            color: black;
+            color: black; /* 🔹 dark text */
         }
         </style>
         """,
