@@ -127,7 +127,6 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
 
 
 # ---------------- STYLING ----------------
-# ---------------- STYLING ----------------
 def add_css():
     st.markdown(
         """
@@ -136,12 +135,18 @@ def add_css():
             background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
             background-size: cover;
             background-repeat: no-repeat;
-            background-attachment: scroll !important;  /* ✅ makes wallpaper move with page */
+            background-attachment: scroll;   /* ✅ makes it move on scroll */
+            background-position: center top;
+        }
+
+        /* Make Streamlit content transparent */
+        .block-container {
+            background: transparent !important;
         }
 
         h1, h2, h3, p, label {
             color: white !important;
-            text-shadow: 1px 1px 2px black; /* 🔹 improves visibility */
+            text-shadow: 1px 1px 2px black;
         }
 
         .title-banner {
@@ -159,13 +164,13 @@ def add_css():
         }
 
         .recommendation {
-            background: rgba(255, 255, 255, 0.9); /* 🔹 semi-white */
+            background: rgba(255, 255, 255, 0.9);
             border-left: 5px solid #4CAF50;
             padding: 10px 15px;
             margin: 8px 0;
             border-radius: 6px;
             font-size: 0.95rem;
-            color: black; /* 🔹 dark text */
+            color: black;
         }
         </style>
         """,
