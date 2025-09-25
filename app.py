@@ -130,18 +130,15 @@ def add_css():
     st.markdown(
         """
         <style>
-        html, body {
-            height: 100%;
-            margin: 0;
+        .stApp {
+            background: transparent; /* keep Streamlit transparent */
         }
-        body {
+
+        .block-container {
             background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
             background-size: cover;
             background-repeat: no-repeat;
-            background-attachment: scroll;  /* ✅ now scrolls with content */
-        }
-        .stApp {
-            background: transparent; /* prevent Streamlit from overriding */
+            background-attachment: scroll;  /* ✅ moves with content */
         }
 
         h1, h2, h3, p, label {
@@ -176,6 +173,7 @@ def add_css():
         """,
         unsafe_allow_html=True
     )
+
 
 # ---------------- MAIN APP ----------------
 def main():
