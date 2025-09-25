@@ -127,16 +127,18 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
 
 
 # ---------------- STYLING ----------------
+# ---------------- STYLING ----------------
 def add_css():
     st.markdown(
         """
         <style>
         .stApp {
-                background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
-                background-size: cover;
-                background-repeat: no-repeat;
-                background-attachment: fixed !important;  /* Force scrolling bg */
-                }
+            background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: scroll !important;  /* ✅ makes wallpaper move with page */
+        }
+
         h1, h2, h3, p, label {
             color: white !important;
             text-shadow: 1px 1px 2px black; /* 🔹 improves visibility */
