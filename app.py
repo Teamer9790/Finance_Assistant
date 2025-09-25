@@ -5,6 +5,20 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
+import streamlit as st
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(
+    page_title="Finance Assistant",  # 🔹 Title for browser tab
+    page_icon="💰",                  # 🔹 Icon for browser tab
+    layout="centered"
+)
 
 # ---------------- DATA GENERATION ----------------
 def generate_data(n_samples=200):
