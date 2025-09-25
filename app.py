@@ -133,7 +133,7 @@ def add_css():
         """
         <style>
         .stApp {
-            background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
+            background-image: url("https://images.pexels.com/photos/11177799/pexels-photo-11177799.jpeg?cs=srgb&dl=pexels-merlin-11177799.jpg&fm=jpg");
             background-size: cover;
             background-repeat: no-repeat;
             background-attachment: scroll !important;  /* ✅ makes wallpaper move with page */
