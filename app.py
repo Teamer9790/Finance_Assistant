@@ -135,7 +135,7 @@ def add_css():
                 background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
                 background-size: cover;
                 background-repeat: no-repeat;
-                background-attachment: scroll !important;  /* Force scrolling bg */
+                background-attachment: fixed !important;  /* Force scrolling bg */
                 }
         h1, h2, h3, p, label {
             color: white !important;
