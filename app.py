@@ -131,15 +131,16 @@ def add_css():
     st.markdown(
         """
         <style>
-        .stApp {
+        /* Apply background to the main scrollable container */
+        .main {
             background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
             background-size: cover;
             background-repeat: no-repeat;
-            background-attachment: scroll;   /* ✅ makes it move on scroll */
+            background-attachment: scroll; /* ✅ will move when page scrolls */
             background-position: center top;
         }
 
-        /* Make Streamlit content transparent */
+        /* Keep content area transparent */
         .block-container {
             background: transparent !important;
         }
