@@ -131,14 +131,18 @@ def add_css():
         """
         <style>
         .stApp {
-            background: transparent; /* keep Streamlit transparent */
-        }
-
-        .block-container {
             background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
             background-size: cover;
             background-repeat: no-repeat;
-            background-attachment: scroll;  /* ✅ moves with content */
+            background-attachment: scroll;  /* ✅ scrolls with page */
+            background-position: center center;
+            min-height: 100vh;   /* ✅ full height */
+            width: 100%;         /* ✅ full width */
+        }
+
+        /* Make the middle container transparent */
+        .block-container {
+            background: transparent !important;
         }
 
         h1, h2, h3, p, label {
