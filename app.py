@@ -120,11 +120,14 @@ def add_css():
         .stApp {
             background-image: url("https://fastly.picsum.photos/id/48/5000/3333.jpg?hmac=y3_1VDNbhii0vM_FN6wxMlvK27vFefflbUSH06z98so");
             background-size: cover;
-            background-attachment: fixed;
+            background-attachment: scroll; /* 🔹 image scrolls with page */
         }
+
         h1, h2, h3, p, label {
             color: white !important;
+            text-shadow: 1px 1px 2px black; /* 🔹 improves visibility */
         }
+
         .title-banner {
             text-align: center;
             margin: 30px 0;
@@ -138,13 +141,15 @@ def add_css():
             font-weight: bold;
             color: white;
         }
+
         .recommendation {
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.9); /* 🔹 semi-white */
             border-left: 5px solid #4CAF50;
             padding: 10px 15px;
             margin: 8px 0;
             border-radius: 6px;
             font-size: 0.95rem;
+            color: black; /* 🔹 dark text */
         }
         </style>
         """,
