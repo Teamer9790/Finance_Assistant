@@ -5,18 +5,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
-import streamlit as st
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.cluster import KMeans
-import matplotlib.pyplot as plt
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
-    page_title="Finance Assistant",  # 🔹 Title for browser tab
-    page_icon="💰",                  # 🔹 Icon for browser tab
+    page_title="Finance Assistant",
+    page_icon="💰",
     layout="centered"
 )
 
@@ -126,6 +119,32 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
     return result
 
 
+# ---------------- GOAL SAVING PLANNER ----------------
+def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
+    total_income = (income + side_income) / 12   # per month
+    monthly_tax = annual_tax / 12
+    monthly_expenses = (loan/12) + (personal_exp/12) + (emergency_exp/12) + (main_exp/12)
+    
+    disposable = total_income - monthly_tax - monthly_expenses
+    required_saving = goal_amount / months
+    gap = required_saving - disposable
+    
+    if gap <= 0:
+        status = "Feasible ✅"
+        advice = f"You can achieve your goal by saving ₹{required_saving:,.0f}/month."
+    else:
+        status = "Not Feasible 🚨"
+        advice = f"Need extra ₹{gap:,.0f}/month. Reduce personal expenses by at least this much."
+    
+    return {
+        "Required Saving per Month": round(required_saving, 2),
+        "Disposable Income per Month": round(disposable, 2),
+        "Gap": round(max(gap, 0), 2),
+        "Status": status,
+        "Advice": advice
+    }
+
+
 # ---------------- STYLING ----------------
 def add_css():
     st.markdown(
@@ -135,11 +154,11 @@ def add_css():
                 background-image: url("https://www.hdwallpapers.in/download/big_pink_bubbles_hd_pink_aesthetic-HD.jpg");
                 background-size: cover;
                 background-repeat: no-repeat;
-                background-attachment: fixed !important;  /* Force scrolling bg */
+                background-attachment: fixed !important;
                 }
         h1, h2, h3, p, label {
             color: white !important;
-            text-shadow: 1px 1px 2px black; /* 🔹 improves visibility */
+            text-shadow: 1px 1px 2px black;
         }
 
         .title-banner {
@@ -157,13 +176,13 @@ def add_css():
         }
 
         .recommendation {
-            background: rgba(255, 255, 255, 0.9); /* 🔹 semi-white */
+            background: rgba(255, 255, 255, 0.9);
             border-left: 5px solid #4CAF50;
             padding: 10px 15px;
             margin: 8px 0;
             border-radius: 6px;
             font-size: 0.95rem;
-            color: black; /* 🔹 dark text */
+            color: black;
         }
         </style>
         """,
@@ -180,6 +199,7 @@ def main():
     st.markdown("<div class='title-banner'><div class='title-text'>💰 Financial Health Assistant</div></div>", unsafe_allow_html=True)
     st.write("Enter your yearly financial details (in ₹):")
 
+    # Inputs
     income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
     side_income = st.number_input("Side Income", min_value=0, value=2_00_000, step=10_000)
     annual_tax = st.number_input("Annual Tax", min_value=0, value=1_50_000, step=10_000)
@@ -189,6 +209,7 @@ def main():
     emergency_exp = st.number_input("Emergency Fund", min_value=0, value=80_000, step=10_000)
     main_exp = st.number_input("Household Expenses", min_value=0, value=3_50_000, step=10_000)
 
+    # -------- Financial Analysis --------
     if st.button("Analyze My Finances"):
         values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp]
         result = financial_assistant(values, scaler, clf, reg, kmeans)
@@ -209,6 +230,18 @@ def main():
         st.subheader("💡 Recommendations")
         for rec in result["Recommendations"]:
             st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
+
+    # -------- Goal Saving Planner --------
+    st.subheader("🎯 Goal Saving Planner")
+    goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=1_00_000, step=10_000)
+    time_period = st.number_input("Enter time period (months)", min_value=1, value=12, step=1)
+
+    if st.button("Plan My Savings"):
+        plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
+        st.info(f"Required Saving per Month: ₹{plan['Required Saving per Month']}")
+        st.success(f"Disposable Income per Month: ₹{plan['Disposable Income per Month']}")
+        st.warning(f"Status: {plan['Status']}")
+        st.markdown(f"💡 {plan['Advice']}")
 
 
 if __name__ == "__main__":
