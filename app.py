@@ -10,7 +10,7 @@ import plotly.express as px
 st.set_page_config(
     page_title="Finance Assistant",
     page_icon="💰",
-    layout="wide"
+    layout="centered"
 )
 
 # ---------------- DATA GENERATION ----------------
@@ -37,7 +37,6 @@ def generate_data(n_samples=200):
     df["stability_score"] = np.random.randint(20, 100, n_samples)
     return df
 
-
 # ---------------- MODEL TRAINING ----------------
 def train_models(df):
     X = df.drop(["status", "stability_score"], axis=1)
@@ -52,7 +51,6 @@ def train_models(df):
     kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
 
     return scaler, clf, reg, kmeans
-
 
 # ---------------- RECOMMENDATIONS ----------------
 def get_recommendations(values, result):
@@ -88,7 +86,6 @@ def get_recommendations(values, result):
 
     return recs
 
-
 # ---------------- ANALYSIS ----------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
     scaled = scaler.transform([values])
@@ -100,6 +97,7 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
 
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp = values
 
+    # Rule overrides
     if investment >= (income * 0.2):
         group = "Investor"
     elif (personal_exp + main_exp) > (income + side_income) * 0.7:
@@ -115,10 +113,9 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
     }
     return result
 
-
 # ---------------- GOAL SAVING PLANNER ----------------
 def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
-    total_income = (income + side_income) / 12
+    total_income = (income + side_income) / 12   # per month
     monthly_tax = annual_tax / 12
     monthly_expenses = (loan/12) + (personal_exp/12) + (emergency_exp/12) + (main_exp/12)
     
@@ -141,41 +138,55 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
         "Advice": advice
     }
 
-
 # ---------------- STYLING ----------------
 def add_css():
     st.markdown(
         """
         <style>
         .stApp {
-            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-            background-size: 400% 400%;
-            animation: gradientBG 12s ease infinite;
+            background: linear-gradient(120deg, #ff758c, #ff7eb3);
+            background-attachment: fixed !important;
         }
-        @keyframes gradientBG {
-            0% {background-position: 0% 50%;}
-            50% {background-position: 100% 50%;}
-            100% {background-position: 0% 50%;}
+        h1, h2, h3 {
+            color: white !important;
+            text-shadow: 1px 1px 3px black;
         }
-        .result-card {
-            background: rgba(255,255,255,0.9);
-            padding: 20px;
-            border-radius: 15px;
-            margin: 15px 0;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+        .title-banner {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .title-text {
+            background: rgba(0, 0, 0, 0.65);
+            display: inline-block;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: white;
+        }
+        .custom-box {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin: 8px 0;
+            font-size: 1rem;
+            color: #222 !important;
+            font-weight: 500;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
         }
         .recommendation {
-            background: #f9f9f9;
-            border-left: 6px solid #4CAF50;
+            background: rgba(255, 255, 255, 0.9);
+            border-left: 5px solid #4CAF50;
             padding: 10px 15px;
             margin: 8px 0;
             border-radius: 6px;
+            font-size: 0.95rem;
+            color: black;
         }
         </style>
         """,
         unsafe_allow_html=True
     )
-
 
 # ---------------- MAIN APP ----------------
 def main():
@@ -183,53 +194,61 @@ def main():
     df = generate_data()
     scaler, clf, reg, kmeans = train_models(df)
 
-    st.title("💰 Financial Health Assistant")
-    st.markdown("### Enter your yearly financial details (in ₹):")
+    st.markdown("<div class='title-banner'><div class='title-text'>💰 Financial Health Assistant</div></div>", unsafe_allow_html=True)
+    st.write("Enter your yearly financial details (in ₹):")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
-        side_income = st.number_input("Side Income", min_value=0, value=2_00_000, step=10_000)
-        annual_tax = st.number_input("Annual Tax", min_value=0, value=1_50_000, step=10_000)
-        loan = st.number_input("Loan Payments", min_value=0, value=4_00_000, step=10_000)
-    with col2:
-        investment = st.number_input("Investments", min_value=0, value=1_00_000, step=10_000)
-        personal_exp = st.number_input("Personal Expenses", min_value=0, value=6_00_000, step=10_000)
-        emergency_exp = st.number_input("Emergency Fund", min_value=0, value=80_000, step=10_000)
-        main_exp = st.number_input("Household Expenses", min_value=0, value=3_50_000, step=10_000)
+    # Inputs
+    income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
+    side_income = st.number_input("Side Income", min_value=0, value=2_00_000, step=10_000)
+    annual_tax = st.number_input("Annual Tax", min_value=0, value=1_50_000, step=10_000)
+    loan = st.number_input("Loan Payments", min_value=0, value=4_00_000, step=10_000)
+    investment = st.number_input("Investments", min_value=0, value=1_00_000, step=10_000)
+    personal_exp = st.number_input("Personal Expenses", min_value=0, value=6_00_000, step=10_000)
+    emergency_exp = st.number_input("Emergency Fund", min_value=0, value=80_000, step=10_000)
+    main_exp = st.number_input("Household Expenses", min_value=0, value=3_50_000, step=10_000)
 
-    if st.button("🔍 Analyze My Finances"):
+    # -------- Financial Analysis --------
+    if st.button("Analyze My Finances"):
         values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp]
         result = financial_assistant(values, scaler, clf, reg, kmeans)
 
-        st.markdown("## 📊 Analysis Result")
-        st.markdown(f"<div class='result-card'><b>Status:</b> {result['Financial Status']}</div>", unsafe_allow_html=True)
-        st.progress(int(result["Stability Score"]))  # progress bar for stability
-        st.markdown(f"<div class='result-card'><b>Group:</b> {result['Group']}</div>", unsafe_allow_html=True)
+        st.subheader("📊 Analysis Result")
+        st.markdown(f"<div class='custom-box'>Status: {result['Financial Status']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='custom-box'>Group: {result['Group']}</div>", unsafe_allow_html=True)
+
+        st.progress(int(result["Stability Score"]))
+        st.caption(f"Stability Score: {result['Stability Score']}%")
+
+        st.subheader("📈 Expense Breakdown")
+        labels = ["Loan", "Investment", "Personal", "Emergency", "Household"]
+        sizes = [loan, investment, personal_exp, emergency_exp, main_exp]
 
         fig = px.pie(
-            names=["Loan", "Investment", "Personal", "Emergency", "Household"],
-            values=[loan, investment, personal_exp, emergency_exp, main_exp],
-            hole=0.4,
-            title="Expense Breakdown"
+            names=labels,
+            values=sizes,
+            hole=0.45,
+            color=labels,
+            color_discrete_sequence=px.colors.qualitative.Set2
         )
+        fig.update_traces(textinfo="percent+label", pull=[0.05]*len(labels))
         st.plotly_chart(fig, use_container_width=True)
 
         with st.expander("💡 Recommendations"):
             for rec in result["Recommendations"]:
                 st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
 
-    st.markdown("## 🎯 Goal Saving Planner")
-    goal_amount = st.number_input("Goal Amount (₹)", min_value=0, value=1_00_000, step=10_000)
-    time_period = st.number_input("Time Period (months)", min_value=1, value=12, step=1)
+    # -------- Goal Saving Planner --------
+    st.subheader("🎯 Goal Saving Planner")
+    goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=1_00_000, step=10_000)
+    time_period = st.number_input("Enter time period (months)", min_value=1, value=12, step=1)
 
-    if st.button("📌 Plan My Savings"):
+    if st.button("Plan My Savings"):
         plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
-        st.markdown(f"<div class='result-card'><b>Required Saving per Month:</b> ₹{plan['Required Saving per Month']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='result-card'><b>Disposable Income per Month:</b> ₹{plan['Disposable Income per Month']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='result-card'><b>Status:</b> {plan['Status']}</div>", unsafe_allow_html=True)
-        st.info(plan["Advice"])
 
+        st.markdown(f"<div class='custom-box'>📌 Required Saving per Month: ₹{plan['Required Saving per Month']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='custom-box'>💵 Disposable Income per Month: ₹{plan['Disposable Income per Month']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='custom-box'>📊 Status: {plan['Status']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='recommendation'>💡 {plan['Advice']}</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
