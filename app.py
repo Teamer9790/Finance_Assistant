@@ -6,14 +6,13 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
-# ---------------- PAGE CONFIG ----------------
+# Page config
 st.set_page_config(
     page_title="Finance Assistant",
     page_icon="💰",
     layout="centered"
 )
 
-# ---------------- DATA GENERATION ----------------
 def generate_data(n_samples=200):
     np.random.seed(42)
     data = {
@@ -27,71 +26,52 @@ def generate_data(n_samples=200):
         "main_exp": np.random.randint(50_000, 30_00_000, n_samples)
     }
     df = pd.DataFrame(data)
-
-    # Status labeling
     df["status"] = np.where(
         (df["loan"] > df["income"] * 0.7) | (df["personal_exp"] > df["income"] * 0.8),
         "Critical",
         np.where(df["investment"] > df["income"] * 0.2, "Safe", "Risky")
     )
-
-    # Random stability score
     df["stability_score"] = np.random.randint(20, 100, n_samples)
     return df
 
-
-# ---------------- MODEL TRAINING ----------------
 def train_models(df):
     X = df.drop(["status", "stability_score"], axis=1)
     y_class = df["status"]
     y_reg = df["stability_score"]
-
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-
     clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
     reg = RandomForestRegressor(random_state=42).fit(X_scaled, y_reg)
     kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
-
     return scaler, clf, reg, kmeans
 
-
-# ---------------- RECOMMENDATIONS ----------------
 def get_recommendations(values, result):
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp = values
     recs = []
-
     if loan > (income * 0.5):
         recs.append("⚠️ High loan burden! Reduce debt or refinance at lower interest.")
     else:
         recs.append("✅ Loan levels are under control.")
-
     if investment < (income * 0.1):
         recs.append("📈 Increase investments for long-term financial growth.")
     else:
         recs.append("✅ Good investment ratio.")
-
     if emergency_exp < (income * 0.05):
         recs.append("🚨 Build a stronger emergency fund (at least 5–10% of income).")
     else:
         recs.append("✅ Emergency fund is sufficient.")
-
     if (personal_exp + main_exp) > (income + side_income) * 0.6:
         recs.append("💸 Expenses are too high compared to income. Cut unnecessary costs.")
     else:
         recs.append("✅ Expense ratio is healthy.")
-
     if result["Financial Status"] == "Safe":
         recs.append("🎯 Good financial health! Maintain balance of saving & spending.")
     elif result["Financial Status"] == "Risky":
         recs.append("⚠️ Risky finances. Focus on saving more & controlling spending.")
     else:
         recs.append("🚨 Critical state! Prioritize loan reduction & expense control.")
-
     return recs
 
-
-# ---------------- ANALYSIS ----------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
     scaled = scaler.transform([values])
     status = clf.predict(scaled)[0]
@@ -99,17 +79,13 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
     cluster = kmeans.predict(scaled)[0]
     cluster_map = {0: "Saver", 1: "Spender", 2: "Investor"}
     group = cluster_map.get(cluster, "Unknown")
-
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp = values
-
-    # Rule overrides
     if investment >= (income * 0.2):
         group = "Investor"
     elif (personal_exp + main_exp) > (income + side_income) * 0.7:
         group = "Spender"
     else:
         group = "Saver"
-
     result = {
         "Financial Status": status,
         "Stability Score": round(score, 2),
@@ -118,24 +94,19 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
     }
     return result
 
-
-# ---------------- GOAL SAVING PLANNER ----------------
 def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
-    total_income = (income + side_income) / 12   # per month
+    total_income = (income + side_income) / 12
     monthly_tax = annual_tax / 12
     mandatory_expenses = (loan/12) + (main_exp/12) + monthly_tax
     disposable = total_income - mandatory_expenses
-
     required_saving = goal_amount / months
     gap = required_saving - disposable
-    
     if gap <= 0:
         status = "Feasible ✅"
         advice = f"You can achieve your goal by saving ₹{required_saving:,.0f}/month."
     else:
         status = "Not Feasible 🚨"
         advice = f"Need extra ₹{gap:,.0f}/month. Reduce personal expenses by at least this much."
-    
     return {
         "Required Saving per Month": round(required_saving, 2),
         "Disposable Income per Month": round(disposable, 2),
@@ -144,8 +115,6 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
         "Advice": advice
     }
 
-
-# ---------------- STYLING ----------------
 def add_css():
     st.markdown(
         """
@@ -155,12 +124,11 @@ def add_css():
                 background-size: cover;
                 background-repeat: no-repeat;
                 background-attachment: fixed !important;
-                }
+        }
         h1, h2, h3, p, label {
             color: white !important;
             text-shadow: 1px 1px 2px black;
         }
-
         .title-banner {
             text-align: center;
             margin: 30px 0;
@@ -174,7 +142,6 @@ def add_css():
             font-weight: bold;
             color: white;
         }
-
         .recommendation {
             background: rgba(255, 255, 255, 0.9);
             border-left: 5px solid #4CAF50;
@@ -189,8 +156,6 @@ def add_css():
         unsafe_allow_html=True
     )
 
-
-# ---------------- MAIN APP ----------------
 def main():
     add_css()
     df = generate_data()
@@ -199,7 +164,6 @@ def main():
     st.markdown("<div class='title-banner'><div class='title-text'>💰 Financial Health Assistant</div></div>", unsafe_allow_html=True)
     st.write("Enter your yearly financial details (in ₹):")
 
-    # Inputs
     income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
     side_income = st.number_input("Side Income", min_value=0, value=2_00_000, step=10_000)
     annual_tax = st.number_input("Annual Tax", min_value=0, value=1_50_000, step=10_000)
@@ -209,7 +173,6 @@ def main():
     emergency_exp = st.number_input("Emergency Fund", min_value=0, value=80_000, step=10_000)
     main_exp = st.number_input("Household Expenses", min_value=0, value=3_50_000, step=10_000)
 
-    # -------- Financial Analysis --------
     if st.button("Analyze My Finances"):
         values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp]
         result = financial_assistant(values, scaler, clf, reg, kmeans)
@@ -219,11 +182,17 @@ def main():
         st.info(f"**Stability Score:** {result['Stability Score']}")
         st.warning(f"**Group:** {result['Group']}")
 
-        # 🔹 Show GIF if Critical
+        # Show GIFs/images based on status
         if result['Financial Status'] == "Critical":
             st.image(
                 "https://media1.tenor.com/m/bbrKlvMvoyMAAAAd/mammootty-crying.gif",
                 caption="Critical Situation Detected!",
+                use_column_width=True
+            )
+        elif result['Group'] == "Saver":
+            st.image(
+                "https://yt3.ggpht.com/vlbB-ZWn-upVsVucxM2jrsbb-OzumHZNa6LfIIih04DdfRmQFhFfouOqjR4J8JdU4_sCuBPLpFl0xA=s400-nd-v1",
+                caption="You’re in Saver mode! 🏦",
                 use_column_width=True
             )
 
@@ -239,7 +208,6 @@ def main():
         for rec in result["Recommendations"]:
             st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
 
-    # -------- Goal Saving Planner --------
     st.subheader("🎯 Goal Saving Planner")
     goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=1_00_000, step=10_000)
     time_period = st.number_input("Enter time period (months)", min_value=1, value=12, step=1)
@@ -250,7 +218,6 @@ def main():
         st.success(f"Disposable Income per Month: ₹{plan['Disposable Income per Month']}")
         st.warning(f"Status: {plan['Status']}")
         st.markdown(f"💡 {plan['Advice']}")
-
 
 if __name__ == "__main__":
     main()
