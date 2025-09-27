@@ -123,9 +123,9 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
 def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
     total_income = (income + side_income) / 12   # per month
     monthly_tax = annual_tax / 12
-    monthly_expenses = (loan/12) + (personal_exp/12) + (emergency_exp/12) + (main_exp/12)
-    
-    disposable = total_income - monthly_tax - monthly_expenses
+    mandatory_expenses = (loan/12) + (main_exp/12) + monthly_tax
+    disposable = total_income - mandatory_expenses
+
     required_saving = goal_amount / months
     gap = required_saving - disposable
     
@@ -218,6 +218,14 @@ def main():
         st.success(f"**Status:** {result['Financial Status']}")
         st.info(f"**Stability Score:** {result['Stability Score']}")
         st.warning(f"**Group:** {result['Group']}")
+
+        # 🔹 Show GIF if Critical
+        if result['Financial Status'] == "Critical":
+            st.image(
+                "https://media1.tenor.com/m/bbrKlvMvoyMAAAAd/mammootty-crying.gif",
+                caption="Critical Situation Detected!",
+                use_column_width=True
+            )
 
         st.subheader("📈 Expense Breakdown")
         labels = ["Loan", "Investment", "Personal", "Emergency", "Household"]
