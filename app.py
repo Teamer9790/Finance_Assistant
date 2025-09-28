@@ -183,6 +183,16 @@ def add_css():
             font-size: 0.95rem;
             color: black;
         }
+        .score-box {
+            background-color: #ff6f91;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: white;
+            margin-top: 10px;
+        }
         </style>
         """,
         unsafe_allow_html=True
@@ -217,7 +227,7 @@ def main():
         st.markdown(f"<div class='custom-box'>Group: {result['Group']}</div>", unsafe_allow_html=True)
 
         st.progress(int(result["Stability Score"]))
-        st.caption(f"Stability Score: {result['Stability Score']}%")
+        st.markdown(f"<div class='score-box'>Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
 
         st.subheader("📈 Expense Breakdown")
         labels = ["Loan", "Investment", "Personal", "Emergency", "Household"]
