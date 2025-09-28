@@ -224,12 +224,10 @@ def main():
 
         st.subheader("📊 Analysis Result")
         with st.container():
-            st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
             st.write(f"📌 **Status:** {result['Financial Status']}")
             st.write(f"👥 **Group:** {result['Group']}")
             st.progress(int(result["Stability Score"]))
             st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
 
         st.subheader("📈 Expense Breakdown")
         labels = ["Loan", "Investment", "Personal", "Emergency", "Household"]
@@ -266,12 +264,10 @@ def main():
     if st.button("📌 Plan My Savings"):
         plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
 
-        st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
         st.write(f"📌 **Required Saving/Month:** ₹{plan['Required Saving per Month']}")
         st.write(f"💵 **Disposable Income/Month:** ₹{plan['Disposable Income per Month']}")
         st.write(f"📊 **Status:** {plan['Status']}")
         st.markdown(f"<div class='recommendation'>💡 {plan['Advice']}</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
