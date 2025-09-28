@@ -144,9 +144,17 @@ def add_css():
         """
         <style>
         .stApp {
-            background: linear-gradient(120deg, #ff758c, #ff7eb3);
-            background-attachment: fixed !important;
+            background: linear-gradient(-45deg, #ff758c, #ff7eb3, #ff6f91, #ff9a9e);
+            background-size: 400% 400%;
+            animation: gradientBG 12s ease infinite;
         }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         h1, h2, h3 {
             color: white !important;
             text-shadow: 1px 1px 3px black;
