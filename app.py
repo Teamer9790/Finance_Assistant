@@ -143,15 +143,18 @@ def add_css():
     st.markdown(
         """
         <style>
+        /* Background video */
         .stApp {
-            background: linear-gradient(-45deg, #3b82f6, #9333ea, #f43f5e, #f59e0b);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+            background: transparent !important;
         }
-        @keyframes gradientBG {
-            0% {background-position: 0% 50%;}
-            50% {background-position: 100% 50%;}
-            100% {background-position: 0% 50%;}
+        #bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: cover;
         }
         .title-text {
             background: rgba(0,0,0,0.6);
@@ -194,6 +197,16 @@ def add_css():
             color: black;
         }
         </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Insert background video
+    st.markdown(
+        f"""
+        <video autoplay muted loop id="bg-video">
+            <source src="https://motionbgs.com/media/86/ps3-wave.960x540.mp4" type="video/mp4">
+        </video>
         """,
         unsafe_allow_html=True
     )
