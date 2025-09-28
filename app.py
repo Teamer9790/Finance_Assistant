@@ -128,7 +128,7 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
         advice = f"You can achieve your goal by saving ₹{required_saving:,.0f}/month."
     else:
         status = "Not Feasible 🚨"
-        advice = f"Need extra ₹{gap:,.0f}/month. Reduce personal expenses by at least this much."
+        advice = f"Need extra ₹{gap:,.0f}/month. Cut personal expenses to cover it."
     
     return {
         "Required Saving per Month": round(required_saving, 2),
@@ -144,44 +144,51 @@ def add_css():
         """
         <style>
         .stApp {
-            background: linear-gradient(-45deg, #6a11cb, #2575fc, #ff6f91, #ff9a9e);
+            background: linear-gradient(-45deg, #3b82f6, #9333ea, #f43f5e, #f59e0b);
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
         }
         @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
         }
-        h1, h2, h3 {
-            color: white !important;
-            text-shadow: 1px 1px 3px black;
+        .title-text {
+            background: rgba(0,0,0,0.6);
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 2.4rem;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.3);
         }
         .glass-box {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255,255,255,0.15);
             backdrop-filter: blur(12px);
-            border-radius: 14px;
-            padding: 16px 22px;
+            border-radius: 12px;
+            padding: 18px;
             margin: 12px 0;
-            box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
-            color: #fff;
-            font-weight: 500;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
+            color: white;
         }
         .score-box {
-            background: linear-gradient(90deg, #1d2671, #c33764);
+            background: linear-gradient(90deg, #ff7eb3, #ff758c);
             padding: 12px;
             border-radius: 10px;
             text-align: center;
             font-size: 1.3rem;
             font-weight: bold;
-            color: #fff;
-            margin-top: 12px;
+            color: white;
+            margin-top: 10px;
+            box-shadow: 0px 0px 10px rgba(255,120,150,0.8);
         }
         .recommendation {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255,255,255,0.9);
             border-left: 5px solid #4CAF50;
             padding: 10px 15px;
-            margin: 8px 0;
+            margin: 6px 0;
             border-radius: 6px;
             font-size: 0.95rem;
             color: black;
@@ -197,7 +204,7 @@ def main():
     df = generate_data()
     scaler, clf, reg, kmeans = train_models(df)
 
-    st.markdown("<h1 style='text-align: center;'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
+    st.markdown("<div class='title-text'>💰 Financial Health Assistant</div>", unsafe_allow_html=True)
     st.write("Enter your yearly financial details (in ₹):")
 
     # Inputs
@@ -216,12 +223,13 @@ def main():
         result = financial_assistant(values, scaler, clf, reg, kmeans)
 
         st.subheader("📊 Analysis Result")
-
-        # ✅ Fixed ghost glass-box
-        st.write(f"📌 **Status:** {result['Financial Status']}")
-        st.write(f"👥 **Group:** {result['Group']}")
-        st.progress(int(result["Stability Score"]))
-        st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
+            st.write(f"📌 **Status:** {result['Financial Status']}")
+            st.write(f"👥 **Group:** {result['Group']}")
+            st.progress(int(result["Stability Score"]))
+            st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         st.subheader("📈 Expense Breakdown")
         labels = ["Loan", "Investment", "Personal", "Emergency", "Household"]
@@ -230,11 +238,20 @@ def main():
         fig = px.pie(
             names=labels,
             values=sizes,
-            hole=0.45,
+            hole=0.55,
             color=labels,
-            color_discrete_sequence=px.colors.qualitative.Set2
+            color_discrete_sequence=px.colors.qualitative.Prism
         )
-        fig.update_traces(textinfo="percent+label", pull=[0.05]*len(labels))
+        fig.update_traces(
+            textinfo="percent+label",
+            pull=[0.05]*len(labels),
+            marker=dict(line=dict(color="white", width=2))
+        )
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="white", size=14),
+        )
         st.plotly_chart(fig, use_container_width=True)
 
         with st.expander("💡 Recommendations"):
@@ -255,6 +272,7 @@ def main():
         st.write(f"📊 **Status:** {plan['Status']}")
         st.markdown(f"<div class='recommendation'>💡 {plan['Advice']}</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()
