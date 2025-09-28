@@ -58,31 +58,31 @@ def get_recommendations(values, result):
     recs = []
 
     if loan > (income * 0.5):
-        recs.append("⚠️ High loan burden! Reduce debt or refinance at lower interest.")
+        recs.append(("⚠️ High loan burden! Reduce debt or refinance.", "danger"))
     else:
-        recs.append("✅ Loan levels are under control.")
+        recs.append(("✅ Loan levels are under control.", "success"))
 
     if investment < (income * 0.1):
-        recs.append("📈 Increase investments for long-term financial growth.")
+        recs.append(("📈 Increase investments for long-term growth.", "warning"))
     else:
-        recs.append("✅ Good investment ratio.")
+        recs.append(("✅ Good investment ratio.", "success"))
 
     if emergency_exp < (income * 0.05):
-        recs.append("🚨 Build a stronger emergency fund (at least 5–10% of income).")
+        recs.append(("🚨 Build a stronger emergency fund (5–10% of income).", "danger"))
     else:
-        recs.append("✅ Emergency fund is sufficient.")
+        recs.append(("✅ Emergency fund is sufficient.", "success"))
 
     if (personal_exp + main_exp) > (income + side_income) * 0.6:
-        recs.append("💸 Expenses are too high compared to income. Cut unnecessary costs.")
+        recs.append(("💸 Expenses too high compared to income. Cut costs.", "warning"))
     else:
-        recs.append("✅ Expense ratio is healthy.")
+        recs.append(("✅ Expense ratio is healthy.", "success"))
 
     if result["Financial Status"] == "Safe":
-        recs.append("🎯 Good financial health! Maintain balance of saving & spending.")
+        recs.append(("🎯 Good financial health! Maintain balance of saving & spending.", "success"))
     elif result["Financial Status"] == "Risky":
-        recs.append("⚠️ Risky finances. Focus on saving more & controlling spending.")
+        recs.append(("⚠️ Risky finances. Focus on saving more & controlling spending.", "warning"))
     else:
-        recs.append("🚨 Critical state! Prioritize loan reduction & expense control.")
+        recs.append(("🚨 Critical state! Prioritize loan reduction & expense control.", "danger"))
 
     return recs
 
@@ -115,7 +115,7 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
 
 # ---------------- GOAL SAVING PLANNER ----------------
 def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
-    total_income = (income + side_income) / 12   # per month
+    total_income = (income + side_income) / 12
     monthly_tax = annual_tax / 12
     monthly_expenses = (loan/12) + (personal_exp/12) + (emergency_exp/12) + (main_exp/12)
     
@@ -128,7 +128,7 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
         advice = f"You can achieve your goal by saving ₹{required_saving:,.0f}/month."
     else:
         status = "Not Feasible 🚨"
-        advice = f"Need extra ₹{gap:,.0f}/month. Reduce personal expenses by at least this much."
+        advice = f"Need extra ₹{gap:,.0f}/month. Cut personal expenses to cover it."
     
     return {
         "Required Saving per Month": round(required_saving, 2),
@@ -144,62 +144,60 @@ def add_css():
         """
         <style>
         .stApp {
-            background: linear-gradient(-45deg, #ff758c, #ff7eb3, #ff6f91, #ff9a9e);
+            background: linear-gradient(-45deg, #6a11cb, #2575fc, #ff758c, #ff7eb3);
             background-size: 400% 400%;
-            animation: gradientBG 12s ease infinite;
+            animation: gradientBG 15s ease infinite;
         }
-
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
-        h1, h2, h3 {
-            color: white !important;
-            text-shadow: 1px 1px 3px black;
-        }
-        .title-banner {
-            text-align: center;
-            margin: 30px 0;
-        }
-        .title-text {
-            background: rgba(0, 0, 0, 0.65);
-            display: inline-block;
-            padding: 15px 40px;
-            border-radius: 12px;
-            font-size: 2.2rem;
-            font-weight: bold;
+        .glass-box {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             color: white;
-        }
-        .custom-box {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 12px 18px;
-            border-radius: 12px;
-            margin: 8px 0;
-            font-size: 1rem;
-            color: #222 !important;
-            font-weight: 500;
-            box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
-        }
-        .recommendation {
-            background: rgba(255, 255, 255, 0.9);
-            border-left: 5px solid #4CAF50;
-            padding: 10px 15px;
-            margin: 8px 0;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            color: black;
         }
         .score-box {
-            background-color: #ff6f91;
-            padding: 12px;
-            border-radius: 10px;
+            background: linear-gradient(90deg, #ff6f91, #ff9671);
+            padding: 15px;
+            border-radius: 12px;
             text-align: center;
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             font-weight: bold;
             color: white;
-            margin-top: 10px;
+            margin-top: 12px;
+            box-shadow: 0 0 12px rgba(255, 100, 150, 0.8);
+        }
+        .recommendation.success {border-left: 6px solid #4CAF50;}
+        .recommendation.warning {border-left: 6px solid #FFC107;}
+        .recommendation.danger {border-left: 6px solid #F44336;}
+        .recommendation {
+            background: rgba(255,255,255,0.15);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: white;
+        }
+        .progress-container {
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            height: 24px;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #ff758c, #ff7eb3);
+            text-align: center;
+            color: white;
+            font-weight: bold;
         }
         </style>
         """,
@@ -212,8 +210,9 @@ def main():
     df = generate_data()
     scaler, clf, reg, kmeans = train_models(df)
 
-    st.markdown("<div class='title-banner'><div class='title-text'>💰 Financial Health Assistant</div></div>", unsafe_allow_html=True)
-    st.write("Enter your yearly financial details (in ₹):")
+    st.markdown("<h1 style='text-align:center;color:white;'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
+
+    st.markdown("<div class='glass-box'>Enter your yearly financial details (in ₹):</div>", unsafe_allow_html=True)
 
     # Inputs
     income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
@@ -226,16 +225,29 @@ def main():
     main_exp = st.number_input("Household Expenses", min_value=0, value=3_50_000, step=10_000)
 
     # -------- Financial Analysis --------
-    if st.button("Analyze My Finances"):
+    if st.button("🔍 Analyze My Finances"):
         values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp]
         result = financial_assistant(values, scaler, clf, reg, kmeans)
 
+        st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
         st.subheader("📊 Analysis Result")
-        st.markdown(f"<div class='custom-box'>Status: {result['Financial Status']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='custom-box'>Group: {result['Group']}</div>", unsafe_allow_html=True)
+        st.write(f"**Status:** {result['Financial Status']}")
+        st.write(f"**Group:** {result['Group']}")
 
-        st.progress(int(result["Stability Score"]))
+        # Custom progress bar
+        st.markdown(
+            f"""
+            <div class="progress-container">
+                <div class="progress-bar" style="width:{result['Stability Score']}%">
+                    {result['Stability Score']}%
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
         st.markdown(f"<div class='score-box'>Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
         st.subheader("📈 Expense Breakdown")
         labels = ["Loan", "Investment", "Personal", "Emergency", "Household"]
@@ -246,27 +258,29 @@ def main():
             values=sizes,
             hole=0.45,
             color=labels,
-            color_discrete_sequence=px.colors.qualitative.Set2
+            color_discrete_sequence=px.colors.sequential.RdPu
         )
         fig.update_traces(textinfo="percent+label", pull=[0.05]*len(labels))
         st.plotly_chart(fig, use_container_width=True)
 
         with st.expander("💡 Recommendations"):
-            for rec in result["Recommendations"]:
-                st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
+            for rec, level in result["Recommendations"]:
+                st.markdown(f"<div class='recommendation {level}'>{rec}</div>", unsafe_allow_html=True)
 
     # -------- Goal Saving Planner --------
     st.subheader("🎯 Goal Saving Planner")
     goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=1_00_000, step=10_000)
     time_period = st.number_input("Enter time period (months)", min_value=1, value=12, step=1)
 
-    if st.button("Plan My Savings"):
+    if st.button("📌 Plan My Savings"):
         plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
 
-        st.markdown(f"<div class='custom-box'>📌 Required Saving per Month: ₹{plan['Required Saving per Month']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='custom-box'>💵 Disposable Income per Month: ₹{plan['Disposable Income per Month']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='custom-box'>📊 Status: {plan['Status']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='recommendation'>💡 {plan['Advice']}</div>", unsafe_allow_html=True)
+        st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
+        st.write(f"📌 **Required Saving/Month:** ₹{plan['Required Saving per Month']}")
+        st.write(f"💵 **Disposable Income/Month:** ₹{plan['Disposable Income per Month']}")
+        st.write(f"📊 **Status:** {plan['Status']}")
+        st.markdown(f"<div class='recommendation'>{plan['Advice']}</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
