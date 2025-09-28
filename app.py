@@ -58,31 +58,31 @@ def get_recommendations(values, result):
     recs = []
 
     if loan > (income * 0.5):
-        recs.append(("⚠️ High loan burden! Reduce debt or refinance.", "danger"))
+        recs.append("⚠️ High loan burden! Reduce debt or refinance at lower interest.")
     else:
-        recs.append(("✅ Loan levels are under control.", "success"))
+        recs.append("✅ Loan levels are under control.")
 
     if investment < (income * 0.1):
-        recs.append(("📈 Increase investments for long-term growth.", "warning"))
+        recs.append("📈 Increase investments for long-term financial growth.")
     else:
-        recs.append(("✅ Good investment ratio.", "success"))
+        recs.append("✅ Good investment ratio.")
 
     if emergency_exp < (income * 0.05):
-        recs.append(("🚨 Build a stronger emergency fund (5–10% of income).", "danger"))
+        recs.append("🚨 Build a stronger emergency fund (at least 5–10% of income).")
     else:
-        recs.append(("✅ Emergency fund is sufficient.", "success"))
+        recs.append("✅ Emergency fund is sufficient.")
 
     if (personal_exp + main_exp) > (income + side_income) * 0.6:
-        recs.append(("💸 Expenses too high compared to income. Cut costs.", "warning"))
+        recs.append("💸 Expenses are too high compared to income. Cut unnecessary costs.")
     else:
-        recs.append(("✅ Expense ratio is healthy.", "success"))
+        recs.append("✅ Expense ratio is healthy.")
 
     if result["Financial Status"] == "Safe":
-        recs.append(("🎯 Good financial health! Maintain balance of saving & spending.", "success"))
+        recs.append("🎯 Good financial health! Maintain balance of saving & spending.")
     elif result["Financial Status"] == "Risky":
-        recs.append(("⚠️ Risky finances. Focus on saving more & controlling spending.", "warning"))
+        recs.append("⚠️ Risky finances. Focus on saving more & controlling spending.")
     else:
-        recs.append(("🚨 Critical state! Prioritize loan reduction & expense control.", "danger"))
+        recs.append("🚨 Critical state! Prioritize loan reduction & expense control.")
 
     return recs
 
@@ -115,7 +115,7 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
 
 # ---------------- GOAL SAVING PLANNER ----------------
 def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
-    total_income = (income + side_income) / 12
+    total_income = (income + side_income) / 12   # per month
     monthly_tax = annual_tax / 12
     monthly_expenses = (loan/12) + (personal_exp/12) + (emergency_exp/12) + (main_exp/12)
     
@@ -144,60 +144,53 @@ def add_css():
         """
         <style>
         .stApp {
-            background: linear-gradient(-45deg, #6a11cb, #2575fc, #ff758c, #ff7eb3);
+            background: linear-gradient(-45deg, #3b82f6, #9333ea, #f43f5e, #f59e0b);
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
         }
         @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+        .title-text {
+            background: rgba(0,0,0,0.6);
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 2.4rem;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.3);
         }
         .glass-box {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 15px 0;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.15);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            border-radius: 12px;
+            padding: 18px;
+            margin: 12px 0;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
             color: white;
         }
         .score-box {
-            background: linear-gradient(90deg, #ff6f91, #ff9671);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: white;
-            margin-top: 12px;
-            box-shadow: 0 0 12px rgba(255, 100, 150, 0.8);
-        }
-        .recommendation.success {border-left: 6px solid #4CAF50;}
-        .recommendation.warning {border-left: 6px solid #FFC107;}
-        .recommendation.danger {border-left: 6px solid #F44336;}
-        .recommendation {
-            background: rgba(255,255,255,0.15);
+            background: rgba(0,0,0,0.7);
             padding: 12px;
-            margin: 8px 0;
-            border-radius: 8px;
-            font-size: 1rem;
-            color: white;
-        }
-        .progress-container {
-            background: rgba(255,255,255,0.2);
-            border-radius: 20px;
-            height: 24px;
-            margin: 10px 0;
-        }
-        .progress-bar {
-            height: 100%;
-            border-radius: 20px;
-            background: linear-gradient(90deg, #ff758c, #ff7eb3);
+            border-radius: 10px;
             text-align: center;
-            color: white;
+            font-size: 1.3rem;
             font-weight: bold;
+            color: #ffcc70;
+            margin-top: 10px;
+        }
+        .recommendation {
+            background: rgba(255,255,255,0.8);
+            border-left: 5px solid #4CAF50;
+            padding: 10px 15px;
+            margin: 6px 0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: black;
         }
         </style>
         """,
@@ -210,9 +203,8 @@ def main():
     df = generate_data()
     scaler, clf, reg, kmeans = train_models(df)
 
-    st.markdown("<h1 style='text-align:center;color:white;'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
-
-    st.markdown("<div class='glass-box'>Enter your yearly financial details (in ₹):</div>", unsafe_allow_html=True)
+    st.markdown("<div class='title-text'>💰 Financial Health Assistant</div>", unsafe_allow_html=True)
+    st.write("Enter your yearly financial details (in ₹):")
 
     # Inputs
     income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
@@ -229,23 +221,11 @@ def main():
         values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp]
         result = financial_assistant(values, scaler, clf, reg, kmeans)
 
-        st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
         st.subheader("📊 Analysis Result")
-        st.write(f"**Status:** {result['Financial Status']}")
-        st.write(f"**Group:** {result['Group']}")
-
-        # Custom progress bar
-        st.markdown(
-            f"""
-            <div class="progress-container">
-                <div class="progress-bar" style="width:{result['Stability Score']}%">
-                    {result['Stability Score']}%
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
+        st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
+        st.write(f"📌 **Status:** {result['Financial Status']}")
+        st.write(f"👥 **Group:** {result['Group']}")
+        st.progress(int(result["Stability Score"]))
         st.markdown(f"<div class='score-box'>Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -258,14 +238,14 @@ def main():
             values=sizes,
             hole=0.45,
             color=labels,
-            color_discrete_sequence=px.colors.sequential.RdPu
+            color_discrete_sequence=px.colors.qualitative.Set2
         )
         fig.update_traces(textinfo="percent+label", pull=[0.05]*len(labels))
         st.plotly_chart(fig, use_container_width=True)
 
         with st.expander("💡 Recommendations"):
-            for rec, level in result["Recommendations"]:
-                st.markdown(f"<div class='recommendation {level}'>{rec}</div>", unsafe_allow_html=True)
+            for rec in result["Recommendations"]:
+                st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
 
     # -------- Goal Saving Planner --------
     st.subheader("🎯 Goal Saving Planner")
@@ -281,6 +261,7 @@ def main():
         st.write(f"📊 **Status:** {plan['Status']}")
         st.markdown(f"<div class='recommendation'>{plan['Advice']}</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()
