@@ -205,7 +205,7 @@ def add_css():
     st.markdown(
         f"""
         <video autoplay muted loop id="bg-video">
-            <source src="https://motionbgs.com/media/86/ps3-wave.960x540.mp4" type="video/mp4">
+            <source src="https://www.pexels.com/download/video/5485144/" type="video/mp4">
         </video>
         """,
         unsafe_allow_html=True
