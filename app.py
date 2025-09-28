@@ -218,12 +218,10 @@ def main():
         st.subheader("📊 Analysis Result")
 
         # ✅ Fixed ghost glass-box
-        st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
         st.write(f"📌 **Status:** {result['Financial Status']}")
         st.write(f"👥 **Group:** {result['Group']}")
         st.progress(int(result["Stability Score"]))
         st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
 
         st.subheader("📈 Expense Breakdown")
         labels = ["Loan", "Investment", "Personal", "Emergency", "Household"]
