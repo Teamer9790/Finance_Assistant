@@ -174,17 +174,18 @@ def add_css():
             color: white;
         }
         .score-box {
-            background: rgba(0,0,0,0.7);
+            background: linear-gradient(90deg, #ff7eb3, #ff758c);
             padding: 12px;
             border-radius: 10px;
             text-align: center;
             font-size: 1.3rem;
             font-weight: bold;
-            color: #ffcc70;
+            color: white;
             margin-top: 10px;
+            box-shadow: 0px 0px 10px rgba(255,120,150,0.8);
         }
         .recommendation {
-            background: rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.9);
             border-left: 5px solid #4CAF50;
             padding: 10px 15px;
             margin: 6px 0;
@@ -222,12 +223,13 @@ def main():
         result = financial_assistant(values, scaler, clf, reg, kmeans)
 
         st.subheader("📊 Analysis Result")
-        st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
-        st.write(f"📌 **Status:** {result['Financial Status']}")
-        st.write(f"👥 **Group:** {result['Group']}")
-        st.progress(int(result["Stability Score"]))
-        st.markdown(f"<div class='score-box'>Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
+            st.write(f"📌 **Status:** {result['Financial Status']}")
+            st.write(f"👥 **Group:** {result['Group']}")
+            st.progress(int(result["Stability Score"]))
+            st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         st.subheader("📈 Expense Breakdown")
         labels = ["Loan", "Investment", "Personal", "Emergency", "Household"]
@@ -236,11 +238,20 @@ def main():
         fig = px.pie(
             names=labels,
             values=sizes,
-            hole=0.45,
+            hole=0.55,
             color=labels,
-            color_discrete_sequence=px.colors.qualitative.Set2
+            color_discrete_sequence=px.colors.qualitative.Prism
         )
-        fig.update_traces(textinfo="percent+label", pull=[0.05]*len(labels))
+        fig.update_traces(
+            textinfo="percent+label",
+            pull=[0.05]*len(labels),
+            marker=dict(line=dict(color="white", width=2))
+        )
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="white", size=14),
+        )
         st.plotly_chart(fig, use_container_width=True)
 
         with st.expander("💡 Recommendations"):
@@ -259,7 +270,7 @@ def main():
         st.write(f"📌 **Required Saving/Month:** ₹{plan['Required Saving per Month']}")
         st.write(f"💵 **Disposable Income/Month:** ₹{plan['Disposable Income per Month']}")
         st.write(f"📊 **Status:** {plan['Status']}")
-        st.markdown(f"<div class='recommendation'>{plan['Advice']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='recommendation'>💡 {plan['Advice']}</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
 
