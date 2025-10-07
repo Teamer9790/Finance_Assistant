@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.cluster import KMeans
 import plotly.express as px
 
 # ---------------- PAGE CONFIG ----------------
@@ -29,8 +30,7 @@ def generate_data(n_samples=200):
 
     df["savings"] = (
         df["income"] + df["side_income"]
-        - (df["annual_tax"] + df["loan"] + df["investment"] +
-           df["personal_exp"] + df["emergency_exp"] + df["main_exp"])
+        - (df["annual_tax"] + df["loan"] + df["investment"] + df["personal_exp"] + df["emergency_exp"] + df["main_exp"])
     )
 
     df["status"] = np.where(
@@ -41,6 +41,7 @@ def generate_data(n_samples=200):
 
     df["stability_score"] = np.random.randint(20, 100, n_samples)
     return df
+
 
 # ---------------- MODEL TRAINING ----------------
 def train_models(df):
@@ -53,8 +54,10 @@ def train_models(df):
 
     clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
     reg = RandomForestRegressor(random_state=42).fit(X_scaled, y_reg)
+    kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
 
-    return scaler, clf, reg
+    return scaler, clf, reg, kmeans
+
 
 # ---------------- RECOMMENDATIONS ----------------
 def get_recommendations(values, result):
@@ -95,26 +98,22 @@ def get_recommendations(values, result):
 
     return recs
 
+
 # ---------------- ANALYSIS ----------------
-def financial_assistant(values, scaler, clf, reg):
-    # Ensure all features used — no slicing
+def financial_assistant(values, scaler, clf, reg, kmeans):
     scaled = scaler.transform([values])
     status = clf.predict(scaled)[0]
     score = reg.predict(scaled)[0]
+    cluster = kmeans.predict(scaled)[0]
+
+    cluster_map = {0: "Saver", 1: "Spender", 2: "Investor"}
+    group = cluster_map.get(cluster, "Unknown")
 
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
 
-    # ----------- Grouping Logic -----------
+    # Override group to Spender if savings are negative (critical spending)
     if savings < 0:
-        group = "Critical"
-    elif investment >= (income * 0.2) and savings >= 0.1 * (income + side_income):
-        group = "Investor"
-    elif (personal_exp + main_exp) > 0.6 * (income + side_income):
         group = "Spender"
-    elif savings >= 0.1 * (income + side_income):
-        group = "Saver"
-    else:
-        group = "Moderate"
 
     result = {
         "Financial Status": status,
@@ -123,6 +122,7 @@ def financial_assistant(values, scaler, clf, reg):
         "Recommendations": get_recommendations(values, {"Financial Status": status})
     }
     return result
+
 
 # ---------------- STYLING ----------------
 def add_css():
@@ -139,6 +139,14 @@ def add_css():
             color: white;
             text-align: center;
             margin-bottom: 25px;
+        }
+        .glass-box {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            padding: 18px;
+            margin: 12px 0;
+            color: white;
         }
         .score-box {
             background: linear-gradient(90deg, #ff7eb3, #ff758c);
@@ -164,11 +172,12 @@ def add_css():
         unsafe_allow_html=True
     )
 
+
 # ---------------- MAIN ----------------
 def main():
     add_css()
     df = generate_data()
-    scaler, clf, reg = train_models(df)
+    scaler, clf, reg, kmeans = train_models(df)
 
     st.markdown("<div class='title-text'>💰 Financial Health Assistant</div>", unsafe_allow_html=True)
     st.write("Enter your yearly financial details (in ₹):")
@@ -186,11 +195,11 @@ def main():
 
     if st.button("🔍 Analyze My Finances"):
         values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
-        result = financial_assistant(values, scaler, clf, reg)
+        result = financial_assistant(values, scaler, clf, reg, kmeans)
 
         st.subheader("📊 Analysis Result")
         st.write(f"📌 **Status:** {result['Financial Status']}")
-        st.write(f"👥 **Group (Category):** {result['Group']}")
+        st.write(f"👥 **Group (Cluster):** {result['Group']}")
         st.progress(int(result["Stability Score"]))
         st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
 
@@ -222,6 +231,7 @@ def main():
         with st.expander("💡 Recommendations"):
             for rec in result["Recommendations"]:
                 st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()
