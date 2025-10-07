@@ -97,7 +97,8 @@ def get_recommendations(values, result):
 
 # ---------------- ANALYSIS ----------------
 def financial_assistant(values, scaler, clf, reg):
-    scaled = scaler.transform([values[:-1]])  # Exclude savings
+    # Ensure all features used — no slicing
+    scaled = scaler.transform([values])
     status = clf.predict(scaled)[0]
     score = reg.predict(scaled)[0]
 
