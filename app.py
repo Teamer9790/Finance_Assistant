@@ -147,55 +147,51 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
     }
     return result
 
-
 # ---------------- STYLING ----------------
 def add_css():
-    st.markdown(
-        """
-        <style>
-        .stApp {background: transparent !important;}
-        .title-text {
-            background: rgba(0,0,0,0.6);
-            padding: 15px 40px;
-            border-radius: 12px;
-            font-size: 2.4rem;
-            font-weight: bold;
-            color: white;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .glass-box {
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(12px);
-            border-radius: 12px;
-            padding: 18px;
-            margin: 12px 0;
-            color: white;
-        }
-        .score-box {
-            background: linear-gradient(90deg, #ff7eb3, #ff758c);
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: white;
-            margin-top: 10px;
-        }
-        .recommendation {
-            background: rgba(255,255,255,0.9);
-            border-left: 5px solid #4CAF50;
-            padding: 10px 15px;
-            margin: 6px 0;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            color: black;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
+    st.markdown("""
+    <style>
+    html, body, [class*="css"] {
+        background: linear-gradient(135deg, #1f1c2c, #928dab);
+        color: white;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    .title-text {
+        font-size: 3rem;
+        font-weight: 700;
+        text-align: center;
+        margin: 30px 0;
+        color: #ffdd57;
+        text-shadow: 2px 2px 4px #000;
+    }
+    .input-card {
+        background: rgba(255,255,255,0.1);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .score-box {
+        background: linear-gradient(90deg, #ff7eb3, #ff758c);
+        padding: 12px;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: white;
+        margin-top: 10px;
+    }
+    .recommendation {
+        background: rgba(255,255,255,0.9);
+        border-left: 5px solid #4CAF50;
+        padding: 10px 15px;
+        margin: 6px 0;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        color: black;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # ---------------- MAIN ----------------
 def main():
@@ -204,16 +200,43 @@ def main():
     scaler, clf, reg, kmeans = train_models(df)
 
     st.markdown("<div class='title-text'>💰 Financial Health Assistant</div>", unsafe_allow_html=True)
-    st.write("Enter your yearly financial details (in ₹):")
+    st.write("### Enter your yearly financial details (in ₹):")
 
-    income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
-    side_income = st.number_input("Side Income", min_value=0, value=2_00_000, step=10_000)
-    annual_tax = st.number_input("Annual Tax", min_value=0, value=1_50_000, step=10_000)
-    loan = st.number_input("Loan Payments", min_value=0, value=4_00_000, step=10_000)
-    investment = st.number_input("Investments", min_value=0, value=1_00_000, step=10_000)
-    personal_exp = st.number_input("Personal Expenses", min_value=0, value=6_00_000, step=10_000)
-    emergency_exp = st.number_input("Emergency Fund", min_value=0, value=80_000, step=10_000)
-    main_exp = st.number_input("Household Expenses", min_value=0, value=3_50_000, step=10_000)
+    with st.container():
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("<div class='input-card'>", unsafe_allow_html=True)
+            income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='input-card'>", unsafe_allow_html=True)
+            side_income = st.number_input("Side Income", min_value=0, value=2_00_000, step=10_000)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='input-card'>", unsafe_allow_html=True)
+            annual_tax = st.number_input("Annual Tax", min_value=0, value=1_50_000, step=10_000)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='input-card'>", unsafe_allow_html=True)
+            loan = st.number_input("Loan Payments", min_value=0, value=4_00_000, step=10_000)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        with col2:
+            st.markdown("<div class='input-card'>", unsafe_allow_html=True)
+            investment = st.number_input("Investments", min_value=0, value=1_00_000, step=10_000)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='input-card'>", unsafe_allow_html=True)
+            personal_exp = st.number_input("Personal Expenses", min_value=0, value=6_00_000, step=10_000)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='input-card'>", unsafe_allow_html=True)
+            emergency_exp = st.number_input("Emergency Fund", min_value=0, value=80_000, step=10_000)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='input-card'>", unsafe_allow_html=True)
+            main_exp = st.number_input("Household Expenses", min_value=0, value=3_50_000, step=10_000)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     savings = (income + side_income) - (annual_tax + loan + investment + personal_exp + emergency_exp + main_exp)
 
@@ -224,7 +247,6 @@ def main():
         st.subheader("📊 Analysis Result")
         st.write(f"📌 **Status:** {result['Financial Status']}")
         st.write(f"👥 **Group (Cluster):** {result['Group']}")
-        # show a bounded progress bar (0-100)
         st.progress(int(np.clip(result["Stability Score"], 0, 100)))
         st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
 
@@ -256,7 +278,6 @@ def main():
         with st.expander("💡 Recommendations"):
             for rec in result["Recommendations"]:
                 st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
-
 
 if __name__ == "__main__":
     main()
