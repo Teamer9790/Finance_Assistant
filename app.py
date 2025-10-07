@@ -33,6 +33,7 @@ def generate_data(n_samples=200):
         - (df["annual_tax"] + df["loan"] + df["investment"] + df["personal_exp"] + df["emergency_exp"] + df["main_exp"])
     )
 
+    # same deterministic rule used both for labeling and as fallback later
     df["status"] = np.where(
         (df["loan"] > df["income"] * 0.7) | (df["personal_exp"] > df["income"] * 0.8),
         "Critical",
@@ -52,11 +53,22 @@ def train_models(df):
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
-    reg = RandomForestRegressor(random_state=42).fit(X_scaled, y_reg)
+    # make classifier more robust: balanced class weights, more estimators
+    clf = RandomForestClassifier(random_state=42, n_estimators=200, class_weight="balanced").fit(X_scaled, y_class)
+    reg = RandomForestRegressor(random_state=42, n_estimators=200).fit(X_scaled, y_reg)
     kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
 
     return scaler, clf, reg, kmeans
+
+
+# ---------------- DETERMINISTIC RULE (FALLBACK) ----------------
+def determine_rule_status(income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings):
+    # Use the same rules used in generate_data to ensure consistency
+    if (loan > income * 0.7) or (personal_exp > income * 0.8):
+        return "Critical"
+    if investment > income * 0.2:
+        return "Safe"
+    return "Moderate"
 
 
 # ---------------- RECOMMENDATIONS ----------------
@@ -102,14 +114,26 @@ def get_recommendations(values, result):
 # ---------------- ANALYSIS ----------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
     scaled = scaler.transform([values])
-    status = clf.predict(scaled)[0]
-    score = reg.predict(scaled)[0]
-    cluster = kmeans.predict(scaled)[0]
+    # classifier prediction
+    status_pred = clf.predict(scaled)[0]
 
+    # deterministic rule
+    income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
+    status_rule = determine_rule_status(income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings)
+
+    # prefer rule-based label if there's a disagreement (keeps consistency with labels used during training)
+    if status_pred != status_rule:
+        status = status_rule
+    else:
+        status = status_pred
+
+    # regressor (clamp to 0-100 for percentage-like score)
+    raw_score = reg.predict(scaled)[0]
+    score = float(np.clip(round(raw_score, 2), 0.0, 100.0))
+
+    cluster = kmeans.predict(scaled)[0]
     cluster_map = {0: "Saver", 1: "Spender", 2: "Investor"}
     group = cluster_map.get(cluster, "Unknown")
-
-    income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
 
     # Override group to Spender if savings are negative (critical spending)
     if savings < 0:
@@ -117,7 +141,7 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
 
     result = {
         "Financial Status": status,
-        "Stability Score": round(score, 2),
+        "Stability Score": score,
         "Group": group,
         "Recommendations": get_recommendations(values, {"Financial Status": status})
     }
@@ -200,7 +224,8 @@ def main():
         st.subheader("📊 Analysis Result")
         st.write(f"📌 **Status:** {result['Financial Status']}")
         st.write(f"👥 **Group (Cluster):** {result['Group']}")
-        st.progress(int(result["Stability Score"]))
+        # show a bounded progress bar (0-100)
+        st.progress(int(np.clip(result["Stability Score"], 0, 100)))
         st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
 
         if savings >= 0:
