@@ -29,7 +29,8 @@ def generate_data(n_samples=200):
 
     df["savings"] = (
         df["income"] + df["side_income"]
-        - (df["annual_tax"] + df["loan"] + df["investment"] + df["personal_exp"] + df["emergency_exp"] + df["main_exp"])
+        - (df["annual_tax"] + df["loan"] + df["investment"] +
+           df["personal_exp"] + df["emergency_exp"] + df["main_exp"])
     )
 
     df["status"] = np.where(
@@ -96,13 +97,13 @@ def get_recommendations(values, result):
 
 # ---------------- ANALYSIS ----------------
 def financial_assistant(values, scaler, clf, reg):
-    scaled = scaler.transform([values[:-1]])  # Remove savings for model input
+    scaled = scaler.transform([values[:-1]])  # Exclude savings
     status = clf.predict(scaled)[0]
     score = reg.predict(scaled)[0]
 
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
 
-    # Updated and clear rule-based logic for grouping
+    # ----------- Grouping Logic -----------
     if savings < 0:
         group = "Critical"
     elif investment >= (income * 0.2) and savings >= 0.1 * (income + side_income):
@@ -190,4 +191,36 @@ def main():
         st.write(f"📌 **Status:** {result['Financial Status']}")
         st.write(f"👥 **Group (Category):** {result['Group']}")
         st.progress(int(result["Stability Score"]))
-        st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}
+        st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
+
+        if savings >= 0:
+            st.write(f"💰 **Estimated Savings:** ₹{savings:,.0f}")
+        else:
+            st.write("🚨 No savings — spending exceeds income!")
+
+        st.subheader("📈 Expense Breakdown")
+        labels = ["Loan", "Investment", "Personal", "Emergency", "Household"]
+        sizes = [loan, investment, personal_exp, emergency_exp, main_exp]
+        if savings > 0:
+            labels.append("Savings")
+            sizes.append(savings)
+
+        fig = px.pie(
+            names=labels,
+            values=sizes,
+            hole=0.55,
+            color_discrete_sequence=px.colors.qualitative.Prism
+        )
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="white", size=14),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+        with st.expander("💡 Recommendations"):
+            for rec in result["Recommendations"]:
+                st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
