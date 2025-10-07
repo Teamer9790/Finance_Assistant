@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.cluster import KMeans
 import plotly.express as px
 
 # ---------------- PAGE CONFIG ----------------
@@ -42,7 +41,6 @@ def generate_data(n_samples=200):
     df["stability_score"] = np.random.randint(20, 100, n_samples)
     return df
 
-
 # ---------------- MODEL TRAINING ----------------
 def train_models(df):
     X = df.drop(["status", "stability_score"], axis=1)
@@ -54,10 +52,8 @@ def train_models(df):
 
     clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
     reg = RandomForestRegressor(random_state=42).fit(X_scaled, y_reg)
-    kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
 
-    return scaler, clf, reg, kmeans
-
+    return scaler, clf, reg
 
 # ---------------- RECOMMENDATIONS ----------------
 def get_recommendations(values, result):
@@ -98,25 +94,25 @@ def get_recommendations(values, result):
 
     return recs
 
-
 # ---------------- ANALYSIS ----------------
-def financial_assistant(values, scaler, clf, reg, kmeans):
-    scaled = scaler.transform([values])
+def financial_assistant(values, scaler, clf, reg):
+    scaled = scaler.transform([values[:-1]])  # Remove savings for model input
     status = clf.predict(scaled)[0]
     score = reg.predict(scaled)[0]
-    cluster = kmeans.predict(scaled)[0]
-    cluster_map = {0: "Saver", 1: "Spender", 2: "Investor"}
-    group = cluster_map.get(cluster, "Unknown")
 
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
 
-    # Adjust grouping by logic
-    if investment >= (income * 0.2):
+    # Updated and clear rule-based logic for grouping
+    if savings < 0:
+        group = "Critical"
+    elif investment >= (income * 0.2) and savings >= 0.1 * (income + side_income):
         group = "Investor"
-    elif (personal_exp + main_exp) > (income + side_income) * 0.7:
+    elif (personal_exp + main_exp) > 0.6 * (income + side_income):
         group = "Spender"
-    else:
+    elif savings >= 0.1 * (income + side_income):
         group = "Saver"
+    else:
+        group = "Moderate"
 
     result = {
         "Financial Status": status,
@@ -126,47 +122,12 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
     }
     return result
 
-
-# ---------------- GOAL SAVING PLANNER ----------------
-def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
-    total_income = (income + side_income) / 12
-    monthly_tax = annual_tax / 12
-    monthly_expenses = (loan/12) + (personal_exp/12) + (emergency_exp/12) + (main_exp/12)
-    disposable = total_income - monthly_tax - monthly_expenses
-    required_saving = goal_amount / months
-    gap = required_saving - disposable
-
-    if gap <= 0:
-        status = "Feasible ✅"
-        advice = f"You can achieve your goal by saving ₹{required_saving:,.0f}/month."
-    else:
-        status = "Not Feasible 🚨"
-        advice = f"Need extra ₹{gap:,.0f}/month. Cut expenses to cover it."
-
-    return {
-        "Required Saving per Month": round(required_saving, 2),
-        "Disposable Income per Month": round(disposable, 2),
-        "Gap": round(max(gap, 0), 2),
-        "Status": status,
-        "Advice": advice
-    }
-
-
 # ---------------- STYLING ----------------
 def add_css():
     st.markdown(
         """
         <style>
         .stApp {background: transparent !important;}
-        #bg-video {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
-            z-index: -1;
-            object-fit: cover;
-        }
         .title-text {
             background: rgba(0,0,0,0.6);
             padding: 15px 40px;
@@ -176,14 +137,6 @@ def add_css():
             color: white;
             text-align: center;
             margin-bottom: 25px;
-        }
-        .glass-box {
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(12px);
-            border-radius: 12px;
-            padding: 18px;
-            margin: 12px 0;
-            color: white;
         }
         .score-box {
             background: linear-gradient(90deg, #ff7eb3, #ff758c);
@@ -209,12 +162,11 @@ def add_css():
         unsafe_allow_html=True
     )
 
-
 # ---------------- MAIN ----------------
 def main():
     add_css()
     df = generate_data()
-    scaler, clf, reg, kmeans = train_models(df)
+    scaler, clf, reg = train_models(df)
 
     st.markdown("<div class='title-text'>💰 Financial Health Assistant</div>", unsafe_allow_html=True)
     st.write("Enter your yearly financial details (in ₹):")
@@ -232,43 +184,10 @@ def main():
 
     if st.button("🔍 Analyze My Finances"):
         values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
-        result = financial_assistant(values, scaler, clf, reg, kmeans)
+        result = financial_assistant(values, scaler, clf, reg)
 
         st.subheader("📊 Analysis Result")
         st.write(f"📌 **Status:** {result['Financial Status']}")
-        st.write(f"👥 **Group (Cluster):** {result['Group']}")
+        st.write(f"👥 **Group (Category):** {result['Group']}")
         st.progress(int(result["Stability Score"]))
-        st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
-
-        if savings >= 0:
-            st.write(f"💰 **Estimated Savings:** ₹{savings:,.0f}")
-        else:
-            st.write("🚨 No savings — spending exceeds income!")
-
-        st.subheader("📈 Expense Breakdown")
-        labels = ["Loan", "Investment", "Personal", "Emergency", "Household"]
-        sizes = [loan, investment, personal_exp, emergency_exp, main_exp]
-        if savings > 0:
-            labels.append("Savings")
-            sizes.append(savings)
-
-        fig = px.pie(
-            names=labels,
-            values=sizes,
-            hole=0.55,
-            color_discrete_sequence=px.colors.qualitative.Prism
-        )
-        fig.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="white", size=14),
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-        with st.expander("💡 Recommendations"):
-            for rec in result["Recommendations"]:
-                st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
-
-
-if __name__ == "__main__":
-    main()
+        st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}
