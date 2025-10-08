@@ -166,7 +166,7 @@ def add_css():
         }
         </style>
         <video autoplay muted loop id="bgvid">
-            <source src="https://player.vimeo.com/external/5485144.sd.mp4?s=783409be7f208cd2a9a28784a2dc457505e6d22a&profile_id=164&oauth2_token_id=57447761" type="video/mp4">
+            <source src="https://www.pexels.com/download/video/5485144/" type="video/mp4">
         </video>
         """, unsafe_allow_html=True)
 
