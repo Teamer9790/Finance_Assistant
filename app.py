@@ -128,6 +128,14 @@ def add_css():
         .main {
             padding: 1rem 3rem;
         }
+        /* Fix random bar under title */
+        div[data-testid="stVerticalBlock"]:has(> div.title-text) + div:empty {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+}
+
 
         /* Title Section */
         .title-text {
