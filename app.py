@@ -2,24 +2,20 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from streamlit_lottie import st_lottie
-import requests
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.cluster import KMeans
 import plotly.express as px
+from streamlit_lottie import st_lottie
+from assets.lottie_loader import load_lottie_url
 
 # ---------------- PAGE CONFIG ----------------
-st.set_page_config(
-    page_title="Finance Assistant",
-    page_icon="💰",
-    layout="centered"
-)
-def load_lottie_url(url):
-    r = requests.get(url)
-    if r.status_code == 200:
-        return r.json()
-    else:
-        return None
+st.set_page_config(page_title="Finance Assistant", page_icon="💰", layout="centered")
+
+# ---------------- STYLING ----------------
+def add_css():
+    with open("assets/custom_style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
 # ---------------- DATA GENERATION ----------------
 def generate_data(n_samples=200):
     np.random.seed(42)
@@ -115,12 +111,14 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
     total_expense = annual_tax + loan + personal_exp + emergency_exp + main_exp
     disposable_income = (total_income - total_expense) / 12
     required_saving = goal_amount / months
+
     if disposable_income >= required_saving:
         status = "Feasible"
         advice = "You're on track to meet your savings goal! Keep saving regularly."
     else:
         status = "Not Feasible"
         advice = "You need to either reduce your expenses or increase income to meet this goal."
+
     return {
         "Required Saving per Month": round(required_saving),
         "Disposable Income per Month": round(disposable_income),
@@ -128,78 +126,34 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
         "Advice": advice
     }
 
-# ---------------- STYLING ----------------
-def add_css():
-    st.markdown("""
-        <style>
-        .stApp {background: transparent !important;}
-        .title-text {
-            background: rgba(0,0,0,0.6);
-            padding: 15px 40px;
-            border-radius: 12px;
-            font-size: 2.4rem;
-            font-weight: bold;
-            color: white;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .score-box {
-            background: linear-gradient(90deg, #ff7eb3, #ff758c);
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: white;
-            margin-top: 10px;
-        }
-        .recommendation {
-            background: rgba(255,255,255,0.9);
-            border-left: 5px solid #4CAF50;
-            padding: 10px 15px;
-            margin: 6px 0;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            color: black;
-        }
-        video#bgvid {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
-            z-index: -1;
-            object-fit: cover;
-        }
-        </style>
-        <video autoplay muted loop id="bgvid">
-            <source src="https://www.pexels.com/download/video/5485144/" type="video/mp4">
-        </video>
-        """, unsafe_allow_html=True)
 
 # ---------------- MAIN ----------------
 def main():
     add_css()
+    df = generate_data()
+    scaler, clf, reg, kmeans = train_models(df)
+
+    # Sidebar with animated tips
     with st.sidebar:
         st.markdown("## 💡 Financial Tips")
         lottie_saving = load_lottie_url("https://lottie.host/4c9e8e7e-4d3a-4b2a-9f5e-4c6c6c6c6c6c/1f0a.json")
         lottie_invest = load_lottie_url("https://lottie.host/3d2a9e3e-2b1a-4c3a-9f5e-4c6c6c6c6c6c/2a0b.json")
         lottie_budget = load_lottie_url("https://lottie.host/7a9e8e7e-4d3a-4b2a-9f5e-4c6c6c6c6c6c/3c0c.json")
 
-        st_lottie(lottie_saving, height=150, key="saving")
+        if lottie_saving: st_lottie(lottie_saving, height=120, key="saving")
         st.markdown("**Save before you spend.** Automate savings to build discipline.")
 
-        st_lottie(lottie_invest, height=150, key="invest")
+        if lottie_invest: st_lottie(lottie_invest, height=120, key="invest")
         st.markdown("**Invest early.** Compounding works best with time.")
 
-        st_lottie(lottie_budget, height=150, key="budget")
+        if lottie_budget: st_lottie(lottie_budget, height=120, key="budget")
         st.markdown("**Track your expenses.** Awareness is the first step to control.")
-        df = generate_data()
-        scaler, clf, reg, kmeans = train_models(df)
 
+    # Main Title
     st.markdown("<div class='title-text'>💰 Financial Health Assistant</div>", unsafe_allow_html=True)
     st.write("Enter your yearly financial details (in ₹):")
 
+    # Inputs
     income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
     side_income = st.number_input("Side Income", min_value=0, value=2_00_000, step=10_000)
     annual_tax = st.number_input("Annual Tax", min_value=0, value=1_50_000, step=10_000)
@@ -233,14 +187,14 @@ def main():
             labels.append("Savings")
             sizes.append(savings)
         fig = px.pie(names=labels, values=sizes, hole=0.55, color_discrete_sequence=px.colors.qualitative.Prism)
-        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white", size=14))
+        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="black", size=14))
         st.plotly_chart(fig, use_container_width=True)
 
         with st.expander("💡 Recommendations"):
             for rec in result["Recommendations"]:
                 st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
 
-    # -------- Goal Saving Planner --------
+    # Goal Saving Planner
     st.subheader("🎯 Goal Saving Planner")
     goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=1_00_000, step=10_000)
     time_period = st.number_input("Enter time period (months)", min_value=1, value=12, step=1)
