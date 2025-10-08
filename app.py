@@ -27,77 +27,62 @@ def generate_data(n_samples=200):
         "main_exp": np.random.randint(50_000, 30_00_000, n_samples)
     }
     df = pd.DataFrame(data)
-
     df["savings"] = (
         df["income"] + df["side_income"]
-        - (df["annual_tax"] + df["loan"] + df["investment"] + df["personal_exp"] + df["emergency_exp"] + df["main_exp"])
+        - (df["annual_tax"] + df["loan"] + df["investment"] +
+           df["personal_exp"] + df["emergency_exp"] + df["main_exp"])
     )
-
     df["status"] = np.where(
         (df["loan"] > df["income"] * 0.7) | (df["personal_exp"] > df["income"] * 0.8),
         "Critical",
         np.where(df["investment"] > df["income"] * 0.2, "Safe", "Moderate")
     )
-
     df["stability_score"] = np.random.randint(20, 100, n_samples)
     return df
-
 
 # ---------------- MODEL TRAINING ----------------
 def train_models(df):
     X = df.drop(["status", "stability_score"], axis=1)
     y_class = df["status"]
     y_reg = df["stability_score"]
-
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-
     clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
     reg = RandomForestRegressor(random_state=42).fit(X_scaled, y_reg)
     kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
-
     return scaler, clf, reg, kmeans
-
 
 # ---------------- RECOMMENDATIONS ----------------
 def get_recommendations(values, result):
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
     recs = []
-
     if loan > (income * 0.5):
         recs.append("⚠️ High loan burden! Reduce debt or refinance at lower interest.")
     else:
         recs.append("✅ Loan levels are under control.")
-
     if investment < (income * 0.1):
         recs.append("📈 Increase investments for long-term financial growth.")
     else:
         recs.append("✅ Good investment ratio.")
-
     if emergency_exp < (income * 0.05):
         recs.append("🚨 Build a stronger emergency fund (at least 5–10% of income).")
     else:
         recs.append("✅ Emergency fund is sufficient.")
-
     if (personal_exp + main_exp) > (income + side_income) * 0.6:
         recs.append("💸 Expenses are too high compared to income. Cut unnecessary costs.")
     else:
         recs.append("✅ Expense ratio is healthy.")
-
     if savings < 0:
         recs.append("🚨 You’re overspending! Try cutting down on expenses.")
     else:
         recs.append("💰 Keep saving consistently each month.")
-
     if result["Financial Status"] == "Safe":
         recs.append("🎯 Excellent! Maintain balance between spending and saving.")
     elif result["Financial Status"] == "Moderate":
         recs.append("⚠️ Finances are okay but can be improved with better planning.")
     else:
         recs.append("🚨 Critical! Focus on reducing debt and unnecessary spending.")
-
     return recs
-
 
 # ---------------- ANALYSIS ----------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
@@ -105,16 +90,10 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
     status = clf.predict(scaled)[0]
     score = reg.predict(scaled)[0]
     cluster = kmeans.predict(scaled)[0]
-
     cluster_map = {0: "Saver", 1: "Spender", 2: "Investor"}
     group = cluster_map.get(cluster, "Unknown")
-
-    income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
-
-    # Override group to Spender if savings are negative (critical spending)
-    if savings < 0:
+    if values[-1] < 0:
         group = "Spender"
-
     result = {
         "Financial Status": status,
         "Stability Score": round(score, 2),
@@ -123,11 +102,28 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
     }
     return result
 
+# ---------------- SAVING PLANNER ----------------
+def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
+    total_income = income + side_income
+    total_expense = annual_tax + loan + personal_exp + emergency_exp + main_exp
+    disposable_income = (total_income - total_expense) / 12
+    required_saving = goal_amount / months
+    if disposable_income >= required_saving:
+        status = "Feasible"
+        advice = "You're on track to meet your savings goal! Keep saving regularly."
+    else:
+        status = "Not Feasible"
+        advice = "You need to either reduce your expenses or increase income to meet this goal."
+    return {
+        "Required Saving per Month": round(required_saving),
+        "Disposable Income per Month": round(disposable_income),
+        "Status": status,
+        "Advice": advice
+    }
 
 # ---------------- STYLING ----------------
 def add_css():
-    st.markdown(
-        """
+    st.markdown("""
         <style>
         .stApp {background: transparent !important;}
         .title-text {
@@ -139,14 +135,6 @@ def add_css():
             color: white;
             text-align: center;
             margin-bottom: 25px;
-        }
-        .glass-box {
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(12px);
-            border-radius: 12px;
-            padding: 18px;
-            margin: 12px 0;
-            color: white;
         }
         .score-box {
             background: linear-gradient(90deg, #ff7eb3, #ff758c);
@@ -167,11 +155,20 @@ def add_css():
             font-size: 0.95rem;
             color: black;
         }
+        video#bgvid {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: cover;
+        }
         </style>
-        """,
-        unsafe_allow_html=True
-    )
-
+        <video autoplay muted loop id="bgvid">
+            <source src="https://player.vimeo.com/external/5485144.sd.mp4?s=783409be7f208cd2a9a28784a2dc457505e6d22a&profile_id=164&oauth2_token_id=57447761" type="video/mp4">
+        </video>
+        """, unsafe_allow_html=True)
 
 # ---------------- MAIN ----------------
 def main():
@@ -214,25 +211,15 @@ def main():
         if savings > 0:
             labels.append("Savings")
             sizes.append(savings)
-
-        fig = px.pie(
-            names=labels,
-            values=sizes,
-            hole=0.55,
-            color_discrete_sequence=px.colors.qualitative.Prism
-        )
-        fig.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="white", size=14),
-        )
+        fig = px.pie(names=labels, values=sizes, hole=0.55, color_discrete_sequence=px.colors.qualitative.Prism)
+        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white", size=14))
         st.plotly_chart(fig, use_container_width=True)
 
         with st.expander("💡 Recommendations"):
             for rec in result["Recommendations"]:
                 st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
 
-# -------- Goal Saving Planner --------
+    # -------- Goal Saving Planner --------
     st.subheader("🎯 Goal Saving Planner")
     goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=1_00_000, step=10_000)
     time_period = st.number_input("Enter time period (months)", min_value=1, value=12, step=1)
@@ -244,7 +231,6 @@ def main():
         st.write(f"💵 *Disposable Income/Month:* ₹{plan['Disposable Income per Month']}")
         st.write(f"📊 *Status:* {plan['Status']}")
         st.markdown(f"<div class='recommendation'>💡 {plan['Advice']}</div>", unsafe_allow_html=True)
-
 
 if __name__ == "__main__":
     main()
