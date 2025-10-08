@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from streamlit_lottie import st_lottie
+import requests
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.cluster import KMeans
 import plotly.express as px
@@ -12,7 +14,12 @@ st.set_page_config(
     page_icon="💰",
     layout="centered"
 )
-
+def load_lottie_url(url):
+    r = requests.get(url)
+    if r.status_code == 200:
+        return r.json()
+    else:
+        return None
 # ---------------- DATA GENERATION ----------------
 def generate_data(n_samples=200):
     np.random.seed(42)
@@ -173,8 +180,22 @@ def add_css():
 # ---------------- MAIN ----------------
 def main():
     add_css()
-    df = generate_data()
-    scaler, clf, reg, kmeans = train_models(df)
+    with st.sidebar:
+        st.markdown("## 💡 Financial Tips")
+        lottie_saving = load_lottie_url("https://lottie.host/4c9e8e7e-4d3a-4b2a-9f5e-4c6c6c6c6c6c/1f0a.json")
+        lottie_invest = load_lottie_url("https://lottie.host/3d2a9e3e-2b1a-4c3a-9f5e-4c6c6c6c6c6c/2a0b.json")
+        lottie_budget = load_lottie_url("https://lottie.host/7a9e8e7e-4d3a-4b2a-9f5e-4c6c6c6c6c6c/3c0c.json")
+
+        st_lottie(lottie_saving, height=150, key="saving")
+        st.markdown("**Save before you spend.** Automate savings to build discipline.")
+
+        st_lottie(lottie_invest, height=150, key="invest")
+        st.markdown("**Invest early.** Compounding works best with time.")
+
+        st_lottie(lottie_budget, height=150, key="budget")
+        st.markdown("**Track your expenses.** Awareness is the first step to control.")
+        df = generate_data()
+        scaler, clf, reg, kmeans = train_models(df)
 
     st.markdown("<div class='title-text'>💰 Financial Health Assistant</div>", unsafe_allow_html=True)
     st.write("Enter your yearly financial details (in ₹):")
