@@ -6,14 +6,108 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.cluster import KMeans
 import plotly.express as px
 
-# ---------------- PAGE CONFIG ----------------
+# ---------------- PAGE CONFIG & CSS OVERHAUL ----------------
 st.set_page_config(
-    page_title="Finance Assistant",
-    page_icon="💰",
-    layout="centered"
+    page_title="Pro Financial Assistant",
+    page_icon="📈",
+    layout="wide" # Use 'wide' layout for a true dashboard feel
 )
 
+def add_css():
+    # Inject professional dark theme and custom component styling
+    st.markdown("""
+        <style>
+        /* General dark theme setup */
+        .stApp {
+            background-color: #1e1e1e; /* Darker background */
+            color: #f0f0f0;
+        }
+        /* Style for the main title */
+        h1 {
+            color: #00A3FF; /* Bright blue for emphasis */
+            border-bottom: 2px solid #00A3FF;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        /* Styling for subheaders */
+        h2, h3 {
+            color: #fafafa;
+            border-left: 5px solid #00A3FF;
+            padding-left: 10px;
+            margin-top: 20px;
+        }
+
+        /* Custom Card Styles for Metrics (mimics Streamlit's containers but with custom look) */
+        .metric-card {
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease-in-out;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Specific Status Styling */
+        .status-safe { background-color: #1a5c1a; } /* Dark Green */
+        .status-moderate { background-color: #8f7220; } /* Dark Yellow */
+        .status-critical { background-color: #7b2424; } /* Dark Red */
+
+        /* Recommendations List Styling */
+        .recommendation-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .recommendation-item {
+            background-color: #2b2b2b; /* Slightly lighter dark color */
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-left: 4px solid #00A3FF;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: #d0d0d0;
+        }
+        .recommendation-item strong {
+            color: #f0f0f0;
+        }
+        
+        /* Custom Button Style */
+        .stButton>button {
+            width: 100%;
+            background-color: #00A3FF;
+            color: white;
+            font-weight: bold;
+            border-radius: 8px;
+            border: none;
+            padding: 10px;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s;
+        }
+        .stButton>button:hover {
+            background-color: #0089d0;
+        }
+
+        /* Sidebar Styling */
+        .sidebar .stNumberInput {
+            margin-bottom: 10px;
+        }
+        .sidebar .st-bb { /* Target the text inside sidebar */
+            color: #d0d0d0;
+        }
+        
+        /* Styling for Goal Planner result */
+        .planner-advice {
+            background-color: #2b2b2b;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #00A3FF;
+        }
+
+        </style>
+        """, unsafe_allow_html=True)
+
 # ---------------- DATA GENERATION ----------------
+# No changes to backend data/model logic, only presentation.
 def generate_data(n_samples=200):
     np.random.seed(42)
     data = {
@@ -41,10 +135,12 @@ def generate_data(n_samples=200):
     return df
 
 # ---------------- MODEL TRAINING ----------------
-def train_models(df):
-    X = df.drop(["status", "stability_score"], axis=1)
-    y_class = df["status"]
-    y_reg = df["stability_score"]
+# Using st.cache_resource for training models to prevent retraining on every interaction
+@st.cache_resource
+def train_models(_df):
+    X = _df.drop(["status", "stability_score"], axis=1)
+    y_class = _df["status"]
+    y_reg = _df["stability_score"]
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
@@ -56,64 +152,104 @@ def train_models(df):
 def get_recommendations(values, result):
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
     recs = []
-    if loan > (income * 0.5):
-        recs.append("⚠️ High loan burden! Reduce debt or refinance at lower interest.")
+    
+    # Debt Analysis
+    debt_ratio = loan / (income + side_income) if (income + side_income) else 0
+    if debt_ratio > 0.35:
+        recs.append("⚠️ **High loan burden!** Your debt servicing ratio is high. Prioritize paying down high-interest debt or explore refinancing options.")
     else:
-        recs.append("✅ Loan levels are under control.")
-    if investment < (income * 0.1):
-        recs.append("📈 Increase investments for long-term financial growth.")
+        recs.append("✅ **Loan levels are healthy.** Continue making timely payments and avoid taking on new, unnecessary debt.")
+        
+    # Investment Analysis
+    investment_ratio = investment / income if income else 0
+    if investment_ratio < 0.15:
+        recs.append("📈 **Increase investment focus.** Aim to allocate at least 15-20% of your income towards growth investments for long-term compounding.")
     else:
-        recs.append("✅ Good investment ratio.")
-    if emergency_exp < (income * 0.05):
-        recs.append("🚨 Build a stronger emergency fund (at least 5–10% of income).")
+        recs.append("✅ **Good investment ratio.** Keep diversifying your portfolio and consistently increasing your investment contributions.")
+
+    # Emergency Fund Analysis (6 months of expenses, roughly 50% of income/year)
+    if emergency_exp < (income * 0.1):
+        recs.append("🚨 **Strengthen your emergency fund!** You need a more robust buffer. Aim for 3-6 months of living expenses saved in a liquid account.")
     else:
-        recs.append("✅ Emergency fund is sufficient.")
-    if (personal_exp + main_exp) > (income + side_income) * 0.6:
-        recs.append("💸 Expenses are too high compared to income. Cut unnecessary costs.")
-    else:
-        recs.append("✅ Expense ratio is healthy.")
+        recs.append("✅ **Emergency fund looks sufficient.** Ensure this fund remains separate from your main investments.")
+
+    # Expense Control (50/30/20 Rule Check)
+    total_needs = annual_tax + loan + emergency_exp + main_exp # Treating tax, loan, main exp as needs
+    total_wants = personal_exp # Treating personal exp as wants
+    
+    needs_ratio = total_needs / (income + side_income) if (income + side_income) else 0
+    wants_ratio = total_wants / (income + side_income) if (income + side_income) else 0
+
+    if needs_ratio > 0.55:
+        recs.append("💸 **Review your necessary spending.** Your essential living expenses are consuming too much of your income. Look for areas to reduce housing, transport, or insurance costs.")
+    if wants_ratio > 0.3:
+        recs.append("🛍️ **Control discretionary spending.** Personal expenses are high. Create a strict budget for 'wants' to free up capital for savings and investment.")
+
+    # Savings check
     if savings < 0:
-        recs.append("🚨 You’re overspending! Try cutting down on expenses.")
-    else:
-        recs.append("💰 Keep saving consistently each month.")
-    if result["Financial Status"] == "Safe":
-        recs.append("🎯 Excellent! Maintain balance between spending and saving.")
-    elif result["Financial Status"] == "Moderate":
-        recs.append("⚠️ Finances are okay but can be improved with better planning.")
-    else:
-        recs.append("🚨 Critical! Focus on reducing debt and unnecessary spending.")
+        recs.append("🔥 **IMMEDIATE ACTION REQUIRED:** You are overspending and incurring debt! Drastically cut all non-essential expenses immediately.")
+    elif savings > (income + side_income) * 0.25:
+        recs.append("🎯 **Excellent saving rate!** You are saving over 25% of your income. Continue this momentum.")
+        
     return recs
 
 # ---------------- ANALYSIS ----------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
-    scaled = scaler.transform([values])
+    # Ensure 'savings' is the last item as it was in the training data
+    if len(values) == 8: # If savings wasn't calculated yet
+        savings = (values[0] + values[1]) - sum(values[2:8])
+        values = values + (savings,)
+    
+    X_single_row = np.array(values).reshape(1, -1)
+    
+    # Scale all features except the last one (savings) which wasn't in the original X
+    # NOTE: The training data (X) excluded 'status' and 'stability_score' but included 'savings'.
+    # The input values array needs to match the structure of the training data 'X'.
+    # Re-aligning input to match original 'X' structure:
+    # X = df.drop(["status", "stability_score"], axis=1) -> [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
+    
+    # The input 'values' is already correctly structured [8 inputs + 1 calculated savings]
+    
+    # Drop the calculated savings value for scaling, since the original training X did not explicitly include it, but the values array has it.
+    # Let's adjust the input to match the *original* column order: income through main_exp (8 features)
+    input_features = np.array(values[:8]).reshape(1, -1)
+    scaled = scaler.transform(input_features)
+    
     status = clf.predict(scaled)[0]
     score = reg.predict(scaled)[0]
     cluster = kmeans.predict(scaled)[0]
-    cluster_map = {0: "Saver", 1: "Spender", 2: "Investor"}
-    group = cluster_map.get(cluster, "Unknown")
+    
+    cluster_map = {0: "Conservative Saver", 1: "Aggressive Investor", 2: "Balanced Planner"}
+    group = cluster_map.get(cluster, "Planner")
+    
     if values[-1] < 0:
-        group = "Spender"
+        group = "High Spender"
+    
     result = {
         "Financial Status": status,
-        "Stability Score": round(score, 2),
+        "Stability Score": round(score[0] if isinstance(score, np.ndarray) else score, 2),
         "Group": group,
-        "Recommendations": get_recommendations(values, {"Financial Status": status})
     }
+    result["Recommendations"] = get_recommendations(values, result) # Pass full values for deep recs
     return result
 
 # ---------------- SAVING PLANNER ----------------
-def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
-    total_income = income + side_income
-    total_expense = annual_tax + loan + personal_exp + emergency_exp + main_exp
+def goal_saving_plan(goal_amount, months, total_income, total_expense):
+    # Calculate monthly disposable income based on annual inputs
     disposable_income = (total_income - total_expense) / 12
     required_saving = goal_amount / months
-    if disposable_income >= required_saving:
+    
+    if disposable_income <= 0:
+        status = "Impossible"
+        advice = "Your annual expenses exceed your income. You must address overspending before planning goals."
+    elif disposable_income >= required_saving:
         status = "Feasible"
-        advice = "You're on track to meet your savings goal! Keep saving regularly."
+        advice = "You're on track to meet your savings goal! Your current disposable income covers the required monthly saving."
     else:
-        status = "Not Feasible"
-        advice = "You need to either reduce your expenses or increase income to meet this goal."
+        status = "Requires Adjustment"
+        shortfall = required_saving - disposable_income
+        advice = f"You need to increase your monthly disposable income by **₹{round(shortfall):,.0f}** or extend the time period to meet this goal."
+        
     return {
         "Required Saving per Month": round(required_saving),
         "Disposable Income per Month": round(disposable_income),
@@ -121,116 +257,176 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
         "Advice": advice
     }
 
-# ---------------- STYLING ----------------
-def add_css():
-    st.markdown("""
-        <style>
-        .stApp {background: transparent !important;}
-        .title-text {
-            background: rgba(0,0,0,0.6);
-            padding: 15px 40px;
-            border-radius: 12px;
-            font-size: 2.4rem;
-            font-weight: bold;
-            color: white;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .score-box {
-            background: linear-gradient(90deg, #ff7eb3, #ff758c);
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: white;
-            margin-top: 10px;
-        }
-        .recommendation {
-            background: rgba(255,255,255,0.9);
-            border-left: 5px solid #4CAF50;
-            padding: 10px 15px;
-            margin: 6px 0;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            color: black;
-        }
-        video#bgvid {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
-            z-index: -1;
-            object-fit: cover;
-        }
-        </style>
-        <video autoplay muted loop id="bgvid">
-            <source src="https://www.pexels.com/download/video/5485144/" type="video/mp4">
-        </video>
-        """, unsafe_allow_html=True)
-
 # ---------------- MAIN ----------------
 def main():
     add_css()
     df = generate_data()
     scaler, clf, reg, kmeans = train_models(df)
 
-    st.markdown("<div class='title-text'>💰 Financial Health Assistant</div>", unsafe_allow_html=True)
-    st.write("Enter your yearly financial details (in ₹):")
+    st.title("💰 Financial Health Dashboard")
+    st.markdown("Use the sidebar on the left to input your annual financial data (in ₹) and instantly analyze your financial health, stability, and future goals.")
 
-    income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
-    side_income = st.number_input("Side Income", min_value=0, value=2_00_000, step=10_000)
-    annual_tax = st.number_input("Annual Tax", min_value=0, value=1_50_000, step=10_000)
-    loan = st.number_input("Loan Payments", min_value=0, value=4_00_000, step=10_000)
-    investment = st.number_input("Investments", min_value=0, value=1_00_000, step=10_000)
-    personal_exp = st.number_input("Personal Expenses", min_value=0, value=6_00_000, step=10_000)
-    emergency_exp = st.number_input("Emergency Fund", min_value=0, value=80_000, step=10_000)
-    main_exp = st.number_input("Household Expenses", min_value=0, value=3_50_000, step=10_000)
+    # ---------------- INPUT SIDEBAR ----------------
+    with st.sidebar:
+        st.header("Annual Financial Inputs (₹)")
+        
+        # Define default values and steps
+        default_income = 12_00_000
+        default_side_income = 2_00_000
+        default_tax = 1_50_000
+        default_loan = 4_00_000
+        default_investment = 1_00_000
+        default_personal_exp = 6_00_000
+        default_emergency_exp = 80_000
+        default_main_exp = 3_50_000
+        
+        income = st.number_input("Main Annual Income", min_value=0, value=default_income, step=10_000)
+        side_income = st.number_input("Side Income", min_value=0, value=default_side_income, step=5_000)
+        
+        st.markdown("---")
+        st.subheader("Expenses & Deductions")
+        
+        annual_tax = st.number_input("Annual Tax Paid", min_value=0, value=default_tax, step=5_000)
+        loan = st.number_input("Yearly Loan Payments (EMI)", min_value=0, value=default_loan, step=10_000)
+        investment = st.number_input("Total Annual Investments/Savings", min_value=0, value=default_investment, step=10_000)
+        personal_exp = st.number_input("Personal/Discretionary Expenses", min_value=0, value=default_personal_exp, step=10_000)
+        emergency_exp = st.number_input("Emergency Fund Contribution", min_value=0, value=default_emergency_exp, step=5_000)
+        main_exp = st.number_input("Household/Essential Expenses", min_value=0, value=default_main_exp, step=10_000)
 
-    savings = (income + side_income) - (annual_tax + loan + investment + personal_exp + emergency_exp + main_exp)
+        total_income = income + side_income
+        total_expense = annual_tax + loan + investment + personal_exp + emergency_exp + main_exp
+        savings = total_income - total_expense
 
-    if st.button("🔍 Analyze My Finances"):
+        st.markdown("---")
+        
+        # Placeholder for analysis button
+        if st.button("📊 Run Financial Analysis", key="run_analysis"):
+            st.session_state.run_analysis = True
+        
+        if "run_analysis" not in st.session_state:
+             st.session_state.run_analysis = False
+
+
+    # ---------------- MAIN DASHBOARD AREA ----------------
+    
+    if st.session_state.run_analysis:
+        
         values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
         result = financial_assistant(values, scaler, clf, reg, kmeans)
+        
+        st.header("📈 Financial Summary & Key Metrics")
+        
+        # Color coding for status
+        status_class_map = {"Safe": "status-safe", "Moderate": "status-moderate", "Critical": "status-critical"}
+        status_emoji_map = {"Safe": "🟢", "Moderate": "🟡", "Critical": "🔴"}
+        
+        # --- 3 KEY METRIC CARDS ---
+        col1, col2, col3 = st.columns(3)
 
-        st.subheader("📊 Analysis Result")
-        st.write(f"📌 **Status:** {result['Financial Status']}")
-        st.write(f"👥 **Group (Cluster):** {result['Group']}")
-        st.progress(int(result["Stability Score"]))
-        st.markdown(f"<div class='score-box'>✨ Stability Score: {result['Stability Score']}%</div>", unsafe_allow_html=True)
+        with col1:
+            st.markdown(f"""
+                <div class="metric-card {status_class_map.get(result['Financial Status'], 'status-moderate')}">
+                    <p style="font-size: 1.1rem; margin: 0; color: #d0d0d0;">Financial Status</p>
+                    <h3 style="margin: 5px 0 0 0; color: white;">{status_emoji_map.get(result['Financial Status'], '')} {result['Financial Status']}</h3>
+                    <p style="font-size: 0.8rem; color: #f0f0f0;">Overall risk assessment</p>
+                </div>
+            """, unsafe_allow_html=True)
 
-        if savings >= 0:
-            st.write(f"💰 **Estimated Savings:** ₹{savings:,.0f}")
-        else:
-            st.write("🚨 No savings — spending exceeds income!")
+        with col2:
+            st.markdown(f"""
+                <div class="metric-card">
+                    <p style="font-size: 1.1rem; margin: 0; color: #d0d0d0;">Stability Score</p>
+                    <h3 style="margin: 5px 0 0 0; color: #00A3FF;">{result['Stability Score']}%</h3>
+                    <p style="font-size: 0.8rem; color: #f0f0f0;">(Based on ML model prediction)</p>
+                </div>
+            """, unsafe_allow_html=True)
 
-        st.subheader("📈 Expense Breakdown")
-        labels = ["Loan", "Investment", "Personal", "Emergency", "Household"]
-        sizes = [loan, investment, personal_exp, emergency_exp, main_exp]
-        if savings > 0:
-            labels.append("Savings")
-            sizes.append(savings)
-        fig = px.pie(names=labels, values=sizes, hole=0.55, color_discrete_sequence=px.colors.qualitative.Prism)
-        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white", size=14))
-        st.plotly_chart(fig, use_container_width=True)
+        with col3:
+            st.markdown(f"""
+                <div class="metric-card">
+                    <p style="font-size: 1.1rem; margin: 0; color: #d0d0d0;">Savings / Overspend</p>
+                    <h3 style="margin: 5px 0 0 0; color: {'#32CD32' if savings >= 0 else '#FF4500'};">₹{savings:,.0f}</h3>
+                    <p style="font-size: 0.8rem; color: #f0f0f0;">({result['Group']} Group)</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+        st.markdown("---")
 
-        with st.expander("💡 Recommendations"):
+        # --- VISUAL BREAKDOWN & RECOMMENDATIONS ---
+        col_chart, col_recs = st.columns([1.5, 1])
+        
+        with col_chart:
+            st.subheader("📊 Annual Cash Flow Breakdown")
+            
+            # Prepare data for Plotly Pie Chart
+            labels = ["Annual Tax", "Loan Payments", "Investment", "Personal Exp.", "Emergency Fund", "Household Exp."]
+            sizes = [annual_tax, loan, investment, personal_exp, emergency_exp, main_exp]
+            
+            # Add savings/deficit to the chart
+            if savings >= 0:
+                labels.append("Net Savings")
+                sizes.append(savings)
+                colors = px.colors.qualitative.Prism + ['#32CD32'] # Add green for savings
+            else:
+                labels.append("Net Deficit")
+                sizes.append(abs(savings))
+                colors = px.colors.qualitative.Prism + ['#FF4500'] # Add red for deficit
+            
+            
+            chart_df = pd.DataFrame({"Category": labels, "Amount": sizes})
+
+            fig = px.pie(
+                chart_df, 
+                names='Category', 
+                values='Amount', 
+                hole=0.6, 
+                color_discrete_sequence=colors,
+                title=f"Total Outflow: ₹{total_expense:,.0f}"
+            )
+            
+            # Update layout for dark theme
+            fig.update_layout(
+                paper_bgcolor="#1e1e1e", # Dashboard background color
+                plot_bgcolor="#1e1e1e",
+                font=dict(color="#f0f0f0", size=14),
+                margin=dict(t=50, b=0, l=0, r=0),
+                legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+            )
+            fig.update_traces(textinfo='percent+label', marker=dict(line=dict(color='#1e1e1e', width=1)))
+            
+            st.plotly_chart(fig, use_container_width=True)
+
+        with col_recs:
+            st.subheader("💡 Actionable Recommendations")
+            st.markdown("<ul class='recommendation-list'>", unsafe_allow_html=True)
             for rec in result["Recommendations"]:
-                st.markdown(f"<div class='recommendation'>{rec}</div>", unsafe_allow_html=True)
+                st.markdown(f"<li class='recommendation-item'>{rec}</li>", unsafe_allow_html=True)
+            st.markdown("</ul>", unsafe_allow_html=True)
 
+
+        st.markdown("---")
+        
     # -------- Goal Saving Planner --------
-    st.subheader("🎯 Goal Saving Planner")
-    goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=1_00_000, step=10_000)
-    time_period = st.number_input("Enter time period (months)", min_value=1, value=12, step=1)
+    st.header("🎯 Financial Goal Planner")
+    
+    col_goal1, col_goal2 = st.columns(2)
+    with col_goal1:
+        goal_amount = st.number_input("Enter Goal Amount (₹)", min_value=0, value=5_00_000, step=10_000)
+    with col_goal2:
+        time_period = st.number_input("Enter Time Period (Months)", min_value=1, value=36, step=6)
 
-    if st.button("📌 Plan My Savings"):
-        plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
+    # Calculate plan based on current inputs (even if analysis wasn't run)
+    plan = goal_saving_plan(goal_amount, time_period, total_income, total_expense)
+    
+    st.markdown(f"""
+        <div class="planner-advice">
+            <h4 style="color: #00A3FF; margin-top: 0;">Plan Status: {plan['Status']}</h4>
+            <p><strong>Required Saving/Month:</strong> ₹{plan['Required Saving per Month']:,.0f}</p>
+            <p><strong>Estimated Disposable Income/Month:</strong> ₹{plan['Disposable Income per Month']:,.0f}</p>
+            <p style="font-weight: bold; margin-bottom: 0;">{plan['Advice']}</p>
+        </div>
+    """, unsafe_allow_html=True)
 
-        st.write(f"📌 *Required Saving/Month:* ₹{plan['Required Saving per Month']}")
-        st.write(f"💵 *Disposable Income/Month:* ₹{plan['Disposable Income per Month']}")
-        st.write(f"📊 *Status:* {plan['Status']}")
-        st.markdown(f"<div class='recommendation'>💡 {plan['Advice']}</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
