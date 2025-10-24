@@ -33,8 +33,6 @@ st.set_page_config(
 # CSS + Background Video + Spinner overlay behavior
 # -------------------------------
 def add_css(background_video_url: str):
-    # This CSS creates a video background (full-screen), an overlay for readability,
-    # and a small JS MutationObserver to darken the overlay while a Streamlit spinner is present.
     st.markdown(f"""
         <style>
         /* App container */
@@ -57,7 +55,7 @@ def add_css(background_video_url: str):
             opacity: 1;
             pointer-events: none;
             filter: saturate(1) contrast(0.95);
-            transform: translateZ(0); /* help with some rendering issues */
+            transform: translateZ(0);
         }}
 
         /* Overlay to improve contrast and readability */
@@ -74,7 +72,7 @@ def add_css(background_video_url: str):
             pointer-events: none;
         }}
 
-        /* When the body has class overlay-darker (toggled by JS when spinner present) */
+        /* When the body has class overlay-darker */
         body.overlay-darker .stApp::before {{
             background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%);
         }}
@@ -90,40 +88,6 @@ def add_css(background_video_url: str):
             opacity: 1 !important;
         }}
 
-        /* Input fields visibility */
-        input[type="number"], .stNumberInput, .stTextInput {{
-            background: rgba(255, 255, 255, 0.15) !important;
-            backdrop-filter: blur(10px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            color: white !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }}
-
-        /* Better visibility for all interactive elements */
-        .stNumberInput > div > div > input {{
-            background: rgba(255, 255, 255, 0.15) !important;
-            color: white !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            visibility: visible !important;
-        }}
-
-        /* Make sure columns are visible */
-        [data-testid="column"] {{
-            background: rgba(0, 0, 0, 0.3) !important;
-            padding: 20px !important;
-            border-radius: 15px !important;
-            backdrop-filter: blur(10px) !important;
-        }}
-
-        /* Metric boxes */
-        [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {{
-            background: rgba(255, 255, 255, 0.08) !important;
-            backdrop-filter: blur(8px) !important;
-            padding: 8px !important;
-            border-radius: 8px !important;
-        }}
-
         /* Headings and text */
         h1, h2, h3, h4, h5, h6, p, label, span, div {{
             color: #fff !important;
@@ -134,20 +98,62 @@ def add_css(background_video_url: str):
         div.stButton > button {{
             background: linear-gradient(90deg,#6a0dad,#3a0ca3);
             color: white;
-            border-radius: 10px;
-            padding: 8px 16px;
+            border-radius: 15px;
+            padding: 12px 24px;
             border: none;
             box-shadow: 0 6px 20px rgba(58,12,163,0.25);
+            font-weight: 600;
         }}
         div.stButton > button:hover {{
             transform: translateY(-2px);
             box-shadow: 0 10px 28px rgba(58,12,163,0.35);
         }}
 
+        /* Make columns have rounded backgrounds */
+        [data-testid="column"] {{
+            background: rgba(0, 0, 0, 0.35) !important;
+            padding: 25px !important;
+            border-radius: 25px !important;
+            backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }}
+
+        /* Round all input boxes */
+        .stNumberInput > div > div {{
+            border-radius: 15px !important;
+            overflow: hidden !important;
+            background: rgba(255, 255, 255, 0.12) !important;
+            backdrop-filter: blur(8px) !important;
+        }}
+
+        .stNumberInput > div > div > input {{
+            background: transparent !important;
+            color: white !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+            border-radius: 15px !important;
+            padding: 10px 15px !important;
+            font-size: 16px !important;
+        }}
+
+        input[type="number"] {{
+            background: rgba(255, 255, 255, 0.12) !important;
+            color: white !important;
+            border-radius: 15px !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        }}
+
+        /* Metric boxes */
+        [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {{
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(8px) !important;
+            padding: 8px !important;
+            border-radius: 12px !important;
+        }}
+
         /* Recommendation box styles */
         .recommendation {{
             padding: 12px 16px;
-            border-radius: 12px;
+            border-radius: 15px;
             margin-bottom: 10px;
             backdrop-filter: blur(6px);
             background: rgba(255,255,255,0.04);
@@ -157,13 +163,25 @@ def add_css(background_video_url: str):
         .rec-bad {{ border-left: 4px solid #e74c3c; }}
         .rec-neutral {{ border-left: 4px solid #3498db; }}
 
+        /* Tabs */
+        .stTabs [data-baseweb="tab-list"] {{
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 5px;
+        }}
+
+        .stTabs [data-baseweb="tab"] {{
+            border-radius: 12px;
+            color: white;
+        }}
+
         /* Animations */
         @keyframes fadeInApp {{
             from {{ opacity: 0; transform: translateY(6px); }}
             to   {{ opacity: 1; transform: translateY(0); }}
         }}
 
-        /* Spinner color tweak (makes spinner glow purple-ish) */
+        /* Spinner color tweak */
         .stSpinner > div {{
             border-top-color: #b388ff !important;
             border-right-color: #9b59ff !important;
@@ -175,11 +193,9 @@ def add_css(background_video_url: str):
         <!-- Background video element -->
         <video autoplay muted loop playsinline id="bg-video">
             <source src="{background_video_url}" type="video/mp4">
-            <!-- fallback message -->
         </video>
 
         <script>
-        // MutationObserver to detect Streamlit spinner and toggle a darker overlay
         (function() {{
             const observer = new MutationObserver(() => {{
                 const spinner = document.querySelector('.stSpinner');
@@ -192,7 +208,6 @@ def add_css(background_video_url: str):
 
             observer.observe(document.body, {{ childList: true, subtree: true }});
 
-            // Initial check (in case spinner exists already)
             if (document.querySelector('.stSpinner')) {{
                 document.body.classList.add('overlay-darker');
             }}
@@ -201,7 +216,7 @@ def add_css(background_video_url: str):
     """, unsafe_allow_html=True)
 
 # -------------------------------
-# Synthetic data + models (same robust logic as before)
+# Synthetic data + models
 # -------------------------------
 def generate_data(n_samples=200):
     np.random.seed(48)
@@ -307,21 +322,26 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
 # Main app
 # -------------------------------
 def main():
-    # Use the new background video URL
     background_video_url = "https://motionbgs.com/media/5530/macos-colorful-wave.960x540.mp4"
     add_css(background_video_url)
 
-    # Initialize or load models in session state
     if 'models' not in st.session_state:
         df = generate_data()
         st.session_state.models = train_models(df)
 
     scaler, clf, reg, kmeans = st.session_state.models
 
-    # Header
-    st.markdown("<h1 style='text-align:center; margin-bottom: 0.2rem;'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color: rgba(255,255,255,0.85)'>Enter your <b>yearly</b> financial details (in ₹) below for analysis.</p>", unsafe_allow_html=True)
-    st.write("")
+    # Header with rounded background
+    st.markdown("""
+        <div style='text-align:center; background: rgba(0, 0, 0, 0.45); 
+                    padding: 35px; border-radius: 25px; backdrop-filter: blur(15px);
+                    margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.1);'>
+            <h1 style='margin-bottom: 10px; font-size: 3em;'>💰 Financial Health Assistant</h1>
+            <p style='color: rgba(255,255,255,0.9); margin: 0; font-size: 1.2em;'>
+                Enter your <b>yearly</b> financial details (in ₹) below for analysis.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
     # Inputs
     col1, col2 = st.columns(2, gap="large")
