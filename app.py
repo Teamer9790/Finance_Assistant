@@ -5,43 +5,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.cluster import KMeans
 import plotly.express as px
-# Import for Lottie Animations
-from streamlit_lottie import st_lottie
-import json
-
-# --- Helper to load Lottie animation (Requires: pip install streamlit-lottie) ---
-@st.cache_data
-def load_lottieurl(url: str):
-    """Loads a Lottie JSON from a URL."""
-    # Placeholder for a real Lottie animation URL
-    # Replace this with a real Lottie URL for a finance/analysis animation
-    # e.g., 'https://assets5.lottiefiles.com/packages/lf20_tijx1g6c.json'
-    
-    # As an alternative, let's just create a dummy JSON if we can't use an external call (like in a deployed env)
-    # A simple animation is enough for demonstration.
-    
-    # In a real app, you'd use a search tool or a file upload to get a good Lottie.
-    
-    # For a minimal, working example, we'll try a common one and fall back to a simple local animation dictionary
-    # if the tool call isn't available or fails.
-    
-    try:
-        import requests
-        r = requests.get(url)
-        if r.status_code != 200:
-            return None
-        return r.json()
-    except:
-        # Fallback Lottie structure for a simple pulsing/processing animation
-        return {
-            "v": "5.7.4", "fr": 30, "ip": 0, "op": 60, "w": 100, "h": 100, "nm": "Loading...",
-            "assets": [], "layers": [
-                {"ty": 4, "nm": "Circle 1", "ks": {"o": {"a": 0, "k": [100, 0], "ix": 11}, "s": {"a": 1, "k": [{"t": 0, "v": [100, 100, 100]}, {"t": 30, "v": [50, 50, 50]}, {"t": 60, "v": [100, 100, 100]}], "ix": 6}, "p": {"a": 0, "k": [50, 50, 0], "ix": 2}, "a": {"a": 0, "k": [50, 50, 0], "ix": 1}}, "shapes": [{"ty": "gr", "it": [{"ty": "el", "p": {"a": 0, "k": [0, 0], "ix": 2}, "s": {"a": 0, "k": [10, 10], "ix": 3}, "nm": "Ellipse 1"}, {"ty": "st", "c": {"a": 0, "k": [1, 1, 1, 1], "ix": 3}, "o": {"a": 0, "k": 100, "ix": 4}, "w": {"a": 0, "k": 2, "ix": 5}, "nm": "Stroke 1"}, {"ty": "tr", "nm": "Transform"}]}], "indefensible": True}
-            ]
-        }
-
-lottie_analysis = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_tijx1g6c.json")
-# Fallback Lottie URL if the above fails: https://lottiefiles.com/8327-processing-animation
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -123,11 +86,6 @@ def add_css():
             border-radius: 12px;
             padding: 20px;
             text-align: center;
-            transition: all 0.3s ease; /* Fluid hover effect */
-        }
-        [data-testid="stMetric"]:hover {
-            transform: translateY(-5px); /* Lift effect on hover */
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
         }
         [data-testid="stMetricLabel"] {
             font-size: 1.1rem;
@@ -169,10 +127,6 @@ def add_css():
             color: #E0E0E0;
             border-left-width: 6px;
             border-left-style: solid;
-            transition: all 0.3s ease; /* Fluid appearance */
-        }
-        .recommendation:hover {
-            background: rgba(0, 0, 0, 0.3);
         }
         /* Color-code recommendations */
         .rec-good { border-left-color: #4CAF50; }
@@ -183,7 +137,6 @@ def add_css():
         """, unsafe_allow_html=True)
 
 # ---------------- DATA GENERATION (Unchanged) ----------------
-@st.cache_data
 def generate_data(n_samples=200):
     np.random.seed(42)
     data = {
@@ -211,26 +164,18 @@ def generate_data(n_samples=200):
     return df
 
 # ---------------- MODEL TRAINING (Unchanged) ----------------
-@st.cache_resource
 def train_models(df):
     X = df.drop(["status", "stability_score"], axis=1)
     y_class = df["status"]
     y_reg = df["stability_score"]
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    # n_init is deprecated/removed in newer sklearn versions, use default for compatibility
-    try:
-        clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
-        reg = RandomForestRegressor(random_state=42).fit(X_scaled, y_reg)
-        kmeans = KMeans(n_clusters=3, random_state=42, n_init="auto").fit(X_scaled)
-    except TypeError: # Fallback for older sklearn versions
-        clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
-        reg = RandomForestRegressor(random_state=42).fit(X_scaled, y_reg)
-        kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
-
+    clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
+    reg = RandomForestRegressor(random_state=42).fit(X_scaled, y_reg)
+    kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
     return scaler, clf, reg, kmeans
 
-# ---------------- RECOMMENDATIONS (Unchanged) ----------------
+# ---------------- RECOMMENDATIONS (Updated for Visibility) ----------------
 def get_recommendations(values, financial_status):
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
     recs = []
@@ -270,34 +215,16 @@ def get_recommendations(values, financial_status):
     
     return recs
 
-# ---------------- ANALYSIS (Unchanged logic) ----------------
-# ---------------- ANALYSIS (Corrected) ----------------
+# ---------------- ANALYSIS (Updated) ----------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
-    
-    # 1. Separate features from the calculated savings (which is the last element)
-    # The features are the first 8 values (income to main_exp)
-    features_list = values[:-1] 
-
-    # 2. DEFINE THE FEATURE NAMES (MUST match the columns used in generate_data/train_models)
-    feature_names = [
-        "income", "side_income", "annual_tax", "loan", 
-        "investment", "personal_exp", "emergency_exp", "main_exp"
-    ]
-    
-    # 3. CONVERT the input list into a NAMED PANDAS DATAFRAME for the scaler/models
-    X_input = pd.DataFrame([features_list], columns=feature_names)
-    
-    # Now, transform() will work because the input has the expected feature names
-    scaled = scaler.transform(X_input) 
-    
-    # The rest of the logic remains the same
+    scaled = scaler.transform([values])
     status = clf.predict(scaled)[0]
     score = reg.predict(scaled)[0]
     cluster = kmeans.predict(scaled)[0]
     cluster_map = {0: "Balanced Saver", 1: "High Spender", 2: "Aggressive Investor"}
     group = cluster_map.get(cluster, "Unknown")
     
-    # Override group if overspending (using the original values list which includes savings)
+    # Override group if overspending
     if values[-1] < 0:
         group = "High Spender"
         
@@ -305,6 +232,7 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
         "Financial Status": status,
         "Stability Score": round(score, 2),
         "Group": group,
+        # Pass status directly to get_recommendations
         "Recommendations": get_recommendations(values, status)
     }
     return result
@@ -313,8 +241,6 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
 def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
     total_income = income + side_income
     # Assuming all expenses are yearly, divide by 12
-    # Note: Investment is removed here because it's a form of saving/spending, not a pure expense like tax/loan/living.
-    # Emergency_exp is treated as a yearly contribution to the fund.
     total_monthly_expense = (annual_tax + loan + personal_exp + emergency_exp + main_exp) / 12
     total_monthly_income = total_income / 12
     
@@ -335,15 +261,14 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
         "Advice": advice
     }
 
-# ---------------- MAIN (New Layout with Animations) ----------------
+# ---------------- MAIN (Completely new layout) ----------------
 def main():
     add_css()
     
     # --- Load Models (in session state to avoid reloading) ---
     if 'models' not in st.session_state:
         df = generate_data()
-        with st.spinner('Preparing AI Models...'): # Spinner animation on startup
-            st.session_state.models = train_models(df)
+        st.session_state.models = train_models(df)
     
     scaler, clf, reg, kmeans = st.session_state.models
 
@@ -351,21 +276,21 @@ def main():
     st.markdown("<p style='text-align: center; font-size: 1.1rem; color: #A0A0B0;'>Enter your <b>yearly</b> financial details (in ₹) below to get a complete analysis and personalized recommendations.</p>", unsafe_allow_html=True)
 
     # --- Input Section ---
-    col1, col2 = st.columns([3, 2], gap="large") # Adjust column width
+    col1, col2 = st.columns(2, gap="large")
     with col1:
         st.header("📝 Your Financials")
         
         c1, c2 = st.columns(2)
         with c1:
-            income = st.number_input("Main Income (Yearly)", min_value=0, value=12_00_000, step=10_000)
-            side_income = st.number_input("Side Income (Yearly)", min_value=0, value=2_00_000, step=10_000)
+            income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
+            side_income = st.number_input("Side Income", min_value=0, value=2_00_000, step=10_000)
             annual_tax = st.number_input("Annual Tax", min_value=0, value=1_50_000, step=10_000)
-            loan = st.number_input("Loan Payments (Yearly)", min_value=0, value=4_00_000, step=10_000)
+            loan = st.number_input("Loan Payments", min_value=0, value=4_00_000, step=10_000)
         with c2:
-            investment = st.number_input("Investments (Yearly)", min_value=0, value=1_00_000, step=10_000)
-            personal_exp = st.number_input("Personal Expenses (Yearly)", min_value=0, value=6_00_000, step=10_000)
-            emergency_exp = st.number_input("Emergency Fund (Total)", min_value=0, value=80_000, step=10_000)
-            main_exp = st.number_input("Household Expenses (Yearly)", min_value=0, value=3_50_000, step=10_000)
+            investment = st.number_input("Investments", min_value=0, value=1_00_000, step=10_000)
+            personal_exp = st.number_input("Personal Expenses", min_value=0, value=6_00_000, step=10_000)
+            emergency_exp = st.number_input("Emergency Fund", min_value=0, value=80_000, step=10_000)
+            main_exp = st.number_input("Household Expenses", min_value=0, value=3_50_000, step=10_000)
         
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -373,13 +298,7 @@ def main():
         st.header("🎯 Your Goals")
         goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=1_00_000, step=10_000)
         time_period = st.number_input("Enter time period (months)", min_value=1, value=12, step=1)
-        
-        st.markdown("<br>", unsafe_allow_html=True) 
-        
-        # --- Lottie Animation for Visual Flair ---
-        if lottie_analysis:
-            st_lottie(lottie_analysis, height=150, key="analysis_anim")
-        
+        st.markdown("<br><br><br><br><br>", unsafe_allow_html=True) # Spacer for alignment
         analyze_button = st.button("🔍 Analyze My Finances")
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -387,44 +306,29 @@ def main():
 
     # --- Output Section (only shows after button click) ---
     if analyze_button:
-        # Use a fluid loading animation while the analysis runs
-        with st.spinner('Running AI Analysis and Generating Recommendations...'):
-            # Calculate savings
-            savings = (income + side_income) - (annual_tax + loan + investment + personal_exp + emergency_exp + main_exp)
-            # The values list includes all features PLUS the calculated savings for recommendations
-            values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
-            
-            # Run analysis
-            result = financial_assistant(values, scaler, clf, reg, kmeans)
-            
-            # Run goal plan
-            plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
+        # Calculate savings
+        savings = (income + side_income) - (annual_tax + loan + investment + personal_exp + emergency_exp + main_exp)
+        values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
+        
+        # Run analysis
+        result = financial_assistant(values, scaler, clf, reg, kmeans)
+        
+        # Run goal plan
+        plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
 
         # --- Display Metrics ---
         st.header("📈 Your Financial Snapshot")
         metric_cols = st.columns(4)
-        
-        # Stability Score is now represented by a progress bar for animation/fluidity
-        stability_score = result['Stability Score']
-        
         with metric_cols[0]:
             st.metric("Financial Status", result['Financial Status'])
-        
-        # Progress Bar animation for a fluid representation of the score
         with metric_cols[1]:
-            st.markdown("<div data-testid='stMetric' style='text-align: left; height: 100%;'>", unsafe_allow_html=True)
-            st.markdown("<div data-testid='stMetricLabel'>Stability Score</div>", unsafe_allow_html=True)
-            st.progress(stability_score / 100.0)
-            st.markdown(f"<p style='font-size: 2.2rem; font-weight: bold; color: white; margin-top: 10px;'>{stability_score}%</p>", unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-
+            st.metric("Stability Score", f"{result['Stability Score']}%")
         with metric_cols[2]:
             st.metric("Primary Group", result['Group'])
         with metric_cols[3]:
             savings_text = f"₹{savings:,.0f}"
             savings_delta = "Above Zero" if savings >= 0 else "Below Zero"
-            # Fluid color change for the delta
-            st.metric("Estimated Yearly Savings", savings_text, delta=savings_delta, delta_color="normal" if savings >= 0 else "inverse")
+            st.metric("Estimated Yearly Savings", savings_text, delta_color="normal" if savings >= 0 else "inverse")
 
         # --- Display Tabs for Details ---
         tab1, tab2, tab3 = st.tabs(["📊 Expense Breakdown", "💡 Recommendations", "🎯 Goal Planner"])
@@ -445,7 +349,7 @@ def main():
             
             df_pie = pd.DataFrame({"Category": labels, "Amount": sizes})
 
-            # The "Better Pie Chart" (Plotly is inherently fluid/interactive)
+            # The "Better Pie Chart"
             fig = px.pie(df_pie, 
                          names='Category', 
                          values='Amount', 
@@ -470,7 +374,7 @@ def main():
         with tab2:
             st.subheader("Your Personalized Recommendations")
             for rec in result["Recommendations"]:
-                # The CSS transition on the recommendation boxes adds a fluid touch
+                # Use markdown to display styled divs
                 st.markdown(f"<div class='recommendation rec-{rec['type']}'>{rec['text']}</div>", unsafe_allow_html=True)
 
         with tab3:
@@ -484,6 +388,7 @@ def main():
             with plan_cols[2]:
                 st.metric("Disposable Income / Month", f"₹{plan['Disposable Income per Month']:,.0f}")
             
+            # Display advice in a color-coded recommendation box
             advice_type = "good" if plan['Status'] == 'Feasible' else "bad"
             st.markdown(f"<div class='recommendation rec-{advice_type}'>💡 {plan['Advice']}</div>", unsafe_allow_html=True)
 
