@@ -80,9 +80,14 @@ def add_css(background_video_url: str):
         }}
 
         /* Ensure main Streamlit content sits above video and overlay */
-        .main, .block-container, .stBlock, .stMarkdown {{
-            position: relative;
-            z-index: 2;
+        .main, .block-container, .stBlock, .stMarkdown, 
+        .stNumberInput, .stButton, .stMetric, .stTabs, 
+        section[data-testid="stSidebar"], 
+        div[data-testid="column"] {{
+            position: relative !important;
+            z-index: 2 !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }}
 
         /* Input fields visibility */
@@ -91,6 +96,8 @@ def add_css(background_video_url: str):
             backdrop-filter: blur(10px) !important;
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
             color: white !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }}
 
         /* Better visibility for all interactive elements */
@@ -98,6 +105,15 @@ def add_css(background_video_url: str):
             background: rgba(255, 255, 255, 0.15) !important;
             color: white !important;
             border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            visibility: visible !important;
+        }}
+
+        /* Make sure columns are visible */
+        [data-testid="column"] {{
+            background: rgba(0, 0, 0, 0.3) !important;
+            padding: 20px !important;
+            border-radius: 15px !important;
+            backdrop-filter: blur(10px) !important;
         }}
 
         /* Metric boxes */
