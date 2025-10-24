@@ -278,7 +278,6 @@ def main():
     # --- Input Section ---
     col1, col2 = st.columns(2, gap="large")
     with col1:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
         st.header("📝 Your Financials")
         
         c1, c2 = st.columns(2)
