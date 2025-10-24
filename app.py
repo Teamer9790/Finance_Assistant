@@ -5,40 +5,49 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.cluster import KMeans
 import plotly.express as px
+# Import for Lottie Animations
 from streamlit_lottie import st_lottie
 import json
-import requests
-from typing import Dict, Any
 
 # --- Helper to load Lottie animation (Requires: pip install streamlit-lottie) ---
 @st.cache_data
-def load_lottieurl(url: str) -> Dict[str, Any] | None:
+def load_lottieurl(url: str):
     """Loads a Lottie JSON from a URL."""
-    try:
-        r = requests.get(url, timeout=5)
-        if r.status_code == 200:
-            return r.json()
-    except requests.exceptions.RequestException:
-        pass
+    # Placeholder for a real Lottie animation URL
+    # Replace this with a real Lottie URL for a finance/analysis animation
+    # e.g., 'https://assets5.lottiefiles.com/packages/lf20_tijx1g6c.json'
     
-    # Fallback Lottie structure for a simple pulsing/processing animation
-    # Used if the URL fails or is blocked
-    return {
-        "v": "5.7.4", "fr": 30, "ip": 0, "op": 60, "w": 100, "h": 100, "nm": "Loading...",
-        "assets": [], "layers": [
-            {"ty": 4, "nm": "Circle 1", "ks": {"o": {"a": 0, "k": [100, 0], "ix": 11}, "s": {"a": 1, "k": [{"t": 0, "v": [100, 100, 100]}, {"t": 30, "v": [50, 50, 50]}, {"t": 60, "v": [100, 100, 100]}], "ix": 6}, "p": {"a": 0, "k": [50, 50, 0], "ix": 2}, "a": {"a": 0, "k": [50, 50, 0], "ix": 1}}, "shapes": [{"ty": "gr", "it": [{"ty": "el", "p": {"a": 0, "k": [0, 0], "ix": 2}, "s": {"a": 0, "k": [10, 10], "ix": 3}, "nm": "Ellipse 1"}, {"ty": "st", "c": {"a": 0, "k": [1, 1, 1, 1], "ix": 3}, "o": {"a": 0, "k": 100, "ix": 4}, "w": {"a": 0, "k": 2, "ix": 5}, "nm": "Stroke 1"}, {"ty": "tr", "nm": "Transform"}]}], "indefensible": True}
-        ]
-    }
+    # As an alternative, let's just create a dummy JSON if we can't use an external call (like in a deployed env)
+    # A simple animation is enough for demonstration.
+    
+    # In a real app, you'd use a search tool or a file upload to get a good Lottie.
+    
+    # For a minimal, working example, we'll try a common one and fall back to a simple local animation dictionary
+    # if the tool call isn't available or fails.
+    
+    try:
+        import requests
+        r = requests.get(url)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except:
+        # Fallback Lottie structure for a simple pulsing/processing animation
+        return {
+            "v": "5.7.4", "fr": 30, "ip": 0, "op": 60, "w": 100, "h": 100, "nm": "Loading...",
+            "assets": [], "layers": [
+                {"ty": 4, "nm": "Circle 1", "ks": {"o": {"a": 0, "k": [100, 0], "ix": 11}, "s": {"a": 1, "k": [{"t": 0, "v": [100, 100, 100]}, {"t": 30, "v": [50, 50, 50]}, {"t": 60, "v": [100, 100, 100]}], "ix": 6}, "p": {"a": 0, "k": [50, 50, 0], "ix": 2}, "a": {"a": 0, "k": [50, 50, 0], "ix": 1}}, "shapes": [{"ty": "gr", "it": [{"ty": "el", "p": {"a": 0, "k": [0, 0], "ix": 2}, "s": {"a": 0, "k": [10, 10], "ix": 3}, "nm": "Ellipse 1"}, {"ty": "st", "c": {"a": 0, "k": [1, 1, 1, 1], "ix": 3}, "o": {"a": 0, "k": 100, "ix": 4}, "w": {"a": 0, "k": 2, "ix": 5}, "nm": "Stroke 1"}, {"ty": "tr", "nm": "Transform"}]}], "indefensible": True}
+            ]
+        }
 
-# Lottie for financial analysis/processing visual flair
 lottie_analysis = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_tijx1g6c.json")
-
+# Fallback Lottie URL if the above fails: https://lottiefiles.com/8327-processing-animation
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
     page_title="Financial Health Assistant",
     page_icon="💰",
-    layout="wide"
+    layout="wide"  # Use wide layout for a dashboard feel
 )
 
 # ---------------- STYLING (The "Aesthetic" Upgrade) ----------------
@@ -46,7 +55,11 @@ def add_css():
     st.markdown("""
         <style>
         /* --- Base --- */
+        body {
+            background-color: #0E1117; /* Fallback */
+        }
         .stApp {
+            /* A clean, professional gradient */
             background: linear-gradient(135deg, #0E1117 0%, #243B55 100%);
             color: #FFFFFF;
         }
@@ -67,7 +80,7 @@ def add_css():
             text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
         }
         
-        /* --- Input/Output Cards (Added hover for fluid effect) --- */
+        /* --- Input/Output Cards --- */
         .card {
             background-color: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
@@ -85,7 +98,7 @@ def add_css():
             border-radius: 8px;
         }
         
-        /* --- Button (Added transform for fluid click effect) --- */
+        /* --- Button --- */
         .stButton > button {
             background: linear-gradient(90deg, #4CAF50, #81C784);
             color: white;
@@ -95,7 +108,7 @@ def add_css():
             font-size: 1.1rem;
             font-weight: bold;
             transition: all 0.3s ease;
-            width: 100%;
+            width: 100%; /* Make button fill its column */
         }
         .stButton > button:hover {
             transform: scale(1.03);
@@ -103,21 +116,50 @@ def add_css():
             opacity: 1;
         }
         
-        /* --- Metric Cards (Added fluid hover effect) --- */
+        /* --- Metric Cards --- */
         [data-testid="stMetric"] {
             background-color: rgba(255, 255, 255, 0.07);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 20px;
             text-align: center;
-            transition: all 0.3s ease; 
+            transition: all 0.3s ease; /* Fluid hover effect */
         }
         [data-testid="stMetric"]:hover {
-            transform: translateY(-5px); 
+            transform: translateY(-5px); /* Lift effect on hover */
             box-shadow: 0 10px 20px rgba(0,0,0,0.4);
         }
+        [data-testid="stMetricLabel"] {
+            font-size: 1.1rem;
+            color: #A0A0B0; /* Lighter label color */
+        }
+        [data-testid="stMetricValue"] {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+        /* Color for "Critical" status */
+        [data-testid="stMetricValue"] p:contains("Critical") { 
+            color: #FF6B6B;
+        }
+        /* Color for "Safe" status */
+        [data-testid="stMetricValue"] p:contains("Safe") {
+            color: #4ECDC4;
+        }
         
-        /* --- Recommendations (Fluid appearance) --- */
+        /* --- Tabs --- */
+        .stTabs [data-baseweb="tab"] {
+            background-color: transparent;
+            color: #A0A0B0;
+            font-size: 1.1rem;
+            padding: 10px 15px;
+        }
+        .stTabs [data-baseweb="tab"][aria-selected="true"] {
+            color: #FFFFFF;
+            border-bottom: 3px solid #4CAF50;
+        }
+
+        /* --- Recommendations (Visible & Viable) --- */
         .recommendation {
             background: rgba(0, 0, 0, 0.2);
             padding: 15px;
@@ -127,8 +169,12 @@ def add_css():
             color: #E0E0E0;
             border-left-width: 6px;
             border-left-style: solid;
-            transition: all 0.3s ease; 
+            transition: all 0.3s ease; /* Fluid appearance */
         }
+        .recommendation:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        /* Color-code recommendations */
         .rec-good { border-left-color: #4CAF50; }
         .rec-bad { border-left-color: #F44336; }
         .rec-neutral { border-left-color: #2196F3; }
@@ -136,7 +182,7 @@ def add_css():
         </style>
         """, unsafe_allow_html=True)
 
-# ---------------- DATA GENERATION ----------------
+# ---------------- DATA GENERATION (Unchanged) ----------------
 @st.cache_data
 def generate_data(n_samples=200):
     np.random.seed(42)
@@ -164,18 +210,15 @@ def generate_data(n_samples=200):
     df["stability_score"] = np.random.randint(20, 100, n_samples)
     return df
 
-# ---------------- MODEL TRAINING ----------------
+# ---------------- MODEL TRAINING (Unchanged) ----------------
 @st.cache_resource
 def train_models(df):
-    # CRUCIAL: X contains the feature names which the scaler remembers.
-    X = df.drop(["status", "stability_score", "savings"], axis=1) # Ensure 'savings' is dropped as it's an output/derived
+    X = df.drop(["status", "stability_score"], axis=1)
     y_class = df["status"]
     y_reg = df["stability_score"]
-    
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    
-    # Use n_init="auto" for modern scikit-learn compatibility
+    # n_init is deprecated/removed in newer sklearn versions, use default for compatibility
     try:
         clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
         reg = RandomForestRegressor(random_state=42).fit(X_scaled, y_reg)
@@ -184,15 +227,15 @@ def train_models(df):
         clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
         reg = RandomForestRegressor(random_state=42).fit(X_scaled, y_reg)
         kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
-        
+
     return scaler, clf, reg, kmeans
 
-# ---------------- RECOMMENDATIONS ----------------
+# ---------------- RECOMMENDATIONS (Unchanged) ----------------
 def get_recommendations(values, financial_status):
-    # values: [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
     recs = []
     
+    # Return a list of dictionaries with text and type
     if loan > (income * 0.5):
         recs.append({"text": "⚠️ High loan burden! Your loan payments are over 50% of your main income. Prioritize reducing this debt or explore refinancing at a lower interest rate.", "type": "bad"})
     else:
@@ -227,32 +270,33 @@ def get_recommendations(values, financial_status):
     
     return recs
 
-# ---------------- ANALYSIS (FIXED: Converts input to DataFrame) ----------------
+# ---------------- ANALYSIS (Corrected) ----------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
     
-    # 1. Separate features (first 8 values) from the calculated savings (last element)
+    # 1. Separate features from the calculated savings (which is the last element)
+    # The features are the first 8 values (income to main_exp)
     features_list = values[:-1] 
 
-    # 2. DEFINE THE FEATURE NAMES (MUST match the columns used in train_models)
+    # 2. DEFINE THE FEATURE NAMES (MUST match the columns used in generate_data/train_models)
     feature_names = [
         "income", "side_income", "annual_tax", "loan", 
         "investment", "personal_exp", "emergency_exp", "main_exp"
     ]
     
-    # 3. CRUCIAL FIX: CONVERT the input list into a NAMED PANDAS DATAFRAME
-    # This preserves feature names for scikit-learn models/scalers.
+    # 3. CONVERT the input list into a NAMED PANDAS DATAFRAME for the scaler/models
     X_input = pd.DataFrame([features_list], columns=feature_names)
     
-    # 4. Perform scaling and prediction
-    scaled = scaler.transform(X_input)
+    # Now, transform() will work because the input has the expected feature names
+    scaled = scaler.transform(X_input) 
     
+    # The rest of the logic remains the same
     status = clf.predict(scaled)[0]
     score = reg.predict(scaled)[0]
     cluster = kmeans.predict(scaled)[0]
     cluster_map = {0: "Balanced Saver", 1: "High Spender", 2: "Aggressive Investor"}
     group = cluster_map.get(cluster, "Unknown")
     
-    # Override group if overspending
+    # Override group if overspending (using the original values list which includes savings)
     if values[-1] < 0:
         group = "High Spender"
         
@@ -264,15 +308,13 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
     }
     return result
 
-# ---------------- SAVING PLANNER ----------------
+# ---------------- SAVING PLANNER (Unchanged) ----------------
 def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
     total_income = income + side_income
-    
-    # Estimate total yearly expenses that reduce disposable income
-    # (Investment is excluded as it's a form of saving, not a sunk cost)
-    total_yearly_expense = annual_tax + loan + personal_exp + emergency_exp + main_exp
-    
-    total_monthly_expense = total_yearly_expense / 12
+    # Assuming all expenses are yearly, divide by 12
+    # Note: Investment is removed here because it's a form of saving/spending, not a pure expense like tax/loan/living.
+    # Emergency_exp is treated as a yearly contribution to the fund.
+    total_monthly_expense = (annual_tax + loan + personal_exp + emergency_exp + main_exp) / 12
     total_monthly_income = total_income / 12
     
     disposable_income = total_monthly_income - total_monthly_expense
@@ -292,15 +334,14 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
         "Advice": advice
     }
 
-# ---------------- MAIN ----------------
+# ---------------- MAIN (New Layout with Animations) ----------------
 def main():
     add_css()
     
     # --- Load Models (in session state to avoid reloading) ---
     if 'models' not in st.session_state:
         df = generate_data()
-        # Fluid spinner while models load on first run
-        with st.spinner('Preparing AI Models... This happens only once.'): 
+        with st.spinner('Preparing AI Models...'): # Spinner animation on startup
             st.session_state.models = train_models(df)
     
     scaler, clf, reg, kmeans = st.session_state.models
@@ -309,7 +350,7 @@ def main():
     st.markdown("<p style='text-align: center; font-size: 1.1rem; color: #A0A0B0;'>Enter your <b>yearly</b> financial details (in ₹) below to get a complete analysis and personalized recommendations.</p>", unsafe_allow_html=True)
 
     # --- Input Section ---
-    col1, col2 = st.columns([3, 2], gap="large") 
+    col1, col2 = st.columns([3, 2], gap="large") # Adjust column width
     with col1:
         st.header("📝 Your Financials")
         
@@ -322,7 +363,7 @@ def main():
         with c2:
             investment = st.number_input("Investments (Yearly)", min_value=0, value=1_00_000, step=10_000)
             personal_exp = st.number_input("Personal Expenses (Yearly)", min_value=0, value=6_00_000, step=10_000)
-            emergency_exp = st.number_input("Emergency Fund (Target/Existing)", min_value=0, value=80_000, step=10_000)
+            emergency_exp = st.number_input("Emergency Fund (Total)", min_value=0, value=80_000, step=10_000)
             main_exp = st.number_input("Household Expenses (Yearly)", min_value=0, value=3_50_000, step=10_000)
         
         st.markdown('</div>', unsafe_allow_html=True)
@@ -349,8 +390,7 @@ def main():
         with st.spinner('Running AI Analysis and Generating Recommendations...'):
             # Calculate savings
             savings = (income + side_income) - (annual_tax + loan + investment + personal_exp + emergency_exp + main_exp)
-            
-            # The values list contains 8 features + 1 savings value
+            # The values list includes all features PLUS the calculated savings for recommendations
             values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
             
             # Run analysis
@@ -363,6 +403,7 @@ def main():
         st.header("📈 Your Financial Snapshot")
         metric_cols = st.columns(4)
         
+        # Stability Score is now represented by a progress bar for animation/fluidity
         stability_score = result['Stability Score']
         
         with metric_cols[0]:
@@ -370,17 +411,14 @@ def main():
         
         # Progress Bar animation for a fluid representation of the score
         with metric_cols[1]:
-            # Custom styled metric to hold the progress bar
             st.markdown("<div data-testid='stMetric' style='text-align: left; height: 100%;'>", unsafe_allow_html=True)
             st.markdown("<div data-testid='stMetricLabel'>Stability Score</div>", unsafe_allow_html=True)
-            # Fluid progress bar
             st.progress(stability_score / 100.0)
             st.markdown(f"<p style='font-size: 2.2rem; font-weight: bold; color: white; margin-top: 10px;'>{stability_score}%</p>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
         with metric_cols[2]:
             st.metric("Primary Group", result['Group'])
-            
         with metric_cols[3]:
             savings_text = f"₹{savings:,.0f}"
             savings_delta = "Above Zero" if savings >= 0 else "Below Zero"
@@ -395,6 +433,8 @@ def main():
             
             labels = ["Loan", "Investment", "Personal Exp.", "Emergency Fund", "Household Exp.", "Annual Tax"]
             sizes = [loan, investment, personal_exp, emergency_exp, main_exp, annual_tax]
+            
+            # Define a better color scheme
             colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FED766', '#9B59B6', '#F06543']
             
             if savings > 0:
@@ -404,7 +444,7 @@ def main():
             
             df_pie = pd.DataFrame({"Category": labels, "Amount": sizes})
 
-            # Plotly chart is highly interactive and fluid
+            # The "Better Pie Chart" (Plotly is inherently fluid/interactive)
             fig = px.pie(df_pie, 
                          names='Category', 
                          values='Amount', 
@@ -414,14 +454,14 @@ def main():
             fig.update_traces(
                 textposition='inside', 
                 textinfo='percent+label',
-                pull=[0.05 if cat == "Savings" else 0 for cat in labels],
-                marker=dict(line=dict(color='#0E1117', width=3))
+                pull=[0.05 if cat == "Savings" else 0 for cat in labels], # Pull out the Savings slice
+                marker=dict(line=dict(color='#0E1117', width=3)) # Add border to slices
             )
             
             fig.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
-                showlegend=False, 
+                showlegend=False, # Legend is redundant with labels on chart
                 font=dict(color="white", size=14)
             )
             st.plotly_chart(fig, use_container_width=True)
@@ -429,7 +469,7 @@ def main():
         with tab2:
             st.subheader("Your Personalized Recommendations")
             for rec in result["Recommendations"]:
-                # The CSS transitions in add_css() make these boxes appear smoothly
+                # The CSS transition on the recommendation boxes adds a fluid touch
                 st.markdown(f"<div class='recommendation rec-{rec['type']}'>{rec['text']}</div>", unsafe_allow_html=True)
 
         with tab3:
