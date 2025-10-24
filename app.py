@@ -276,7 +276,7 @@ def main():
     st.markdown("<p style='text-align: center; font-size: 1.1rem; color: #A0A0B0;'>Enter your <b>yearly</b> financial details (in ₹) below to get a complete analysis and personalized recommendations.</p>", unsafe_allow_html=True)
 
     # --- Input Section ---
-    col1, col2 = st.columns(2, gap="large")
+
     with col1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.header("📝 Your Financials")
