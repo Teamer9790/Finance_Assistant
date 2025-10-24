@@ -295,7 +295,6 @@ def main():
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
         st.header("🎯 Your Goals")
         goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=1_00_000, step=10_000)
         time_period = st.number_input("Enter time period (months)", min_value=1, value=12, step=1)
