@@ -5,7 +5,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.cluster import KMeans
 import plotly.express as px
-import time  # Import time for the loading simulation
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -134,41 +133,6 @@ def add_css():
         .rec-bad { border-left-color: #F44336; }
         .rec-neutral { border-left-color: #2196F3; }
 
-        /* --- NEW: Loading Animation --- */
-        .loader-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 200px; /* Give it space */
-            margin: 10px 0;
-        }
-        .loader-dot {
-            height: 20px;
-            width: 20px;
-            margin: 0 10px;
-            background-color: #4CAF50; /* Theme color */
-            border-radius: 50%;
-            animation: pulse 1.4s infinite ease-in-out both;
-        }
-        .loader-dot:nth-child(1) {
-            animation-delay: -0.32s;
-        }
-        .loader-dot:nth-child(2) {
-            animation-delay: -0.16s;
-        }
-        @keyframes pulse {
-            0%, 80%, 100% {
-                transform: scale(0.8);
-                opacity: 0.5;
-            }
-            40% {
-                transform: scale(1.2);
-                opacity: 1;
-            }
-        }
-        /* --- End of New CSS --- */
-
         </style>
         """, unsafe_allow_html=True)
 
@@ -211,7 +175,7 @@ def train_models(df):
     kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
     return scaler, clf, reg, kmeans
 
-# ---------------- RECOMMENDATIONS (Unchanged) ----------------
+# ---------------- RECOMMENDATIONS (Updated for Visibility) ----------------
 def get_recommendations(values, financial_status):
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
     recs = []
@@ -251,7 +215,7 @@ def get_recommendations(values, financial_status):
     
     return recs
 
-# ---------------- ANALYSIS (Unchanged) ----------------
+# ---------------- ANALYSIS (Updated) ----------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
     scaled = scaler.transform([values])
     status = clf.predict(scaled)[0]
@@ -297,7 +261,7 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
         "Advice": advice
     }
 
-# ---------------- MAIN (Updated with loader) ----------------
+# ---------------- MAIN (Completely new layout) ----------------
 def main():
     add_css()
     
@@ -314,8 +278,6 @@ def main():
     # --- Input Section ---
     col1, col2 = st.columns(2, gap="large")
     with col1:
-        # Note: I removed the .card class from here to fix the layout issue
-        # from your screenshot. Headers are now used directly.
         st.header("📝 Your Financials")
         
         c1, c2 = st.columns(2)
@@ -330,45 +292,29 @@ def main():
             emergency_exp = st.number_input("Emergency Fund", min_value=0, value=80_000, step=10_000)
             main_exp = st.number_input("Household Expenses", min_value=0, value=3_50_000, step=10_000)
         
-        # st.markdown('</div>', unsafe_allow_html=True) # Removed closing div
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
-        # st.markdown('<div class="card">', unsafe_allow_html=True) # Removed opening div
         st.header("🎯 Your Goals")
         goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=1_00_000, step=10_000)
         time_period = st.number_input("Enter time period (months)", min_value=1, value=12, step=1)
         st.markdown("<br><br><br><br><br>", unsafe_allow_html=True) # Spacer for alignment
         analyze_button = st.button("🔍 Analyze My Finances")
-        # st.markdown('</div>', unsafe_allow_html=True) # Removed closing div
+        st.markdown('</div>', unsafe_allow_html=True)
 
     st.divider()
 
     # --- Output Section (only shows after button click) ---
     if analyze_button:
-        # --- NEW: Add loader ---
-        loader_placeholder = st.empty()
-        loader_placeholder.markdown(
-            """
-            <div class="loader-container">
-                <div class="loader-dot"></div>
-                <div class="loader-dot"></div>
-                <div class="loader-dot"></div>
-            </div>
-            """, 
-            unsafe_allow_html=True
-        )
-        
-        # Simulate a short processing time
-        time.sleep(1.5)
-        
-        # --- Run analysis (as before) ---
+        # Calculate savings
         savings = (income + side_income) - (annual_tax + loan + investment + personal_exp + emergency_exp + main_exp)
         values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
+        
+        # Run analysis
         result = financial_assistant(values, scaler, clf, reg, kmeans)
+        
+        # Run goal plan
         plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
-
-        # --- NEW: Clear loader ---
-        loader_placeholder.empty()
 
         # --- Display Metrics ---
         st.header("📈 Your Financial Snapshot")
@@ -439,7 +385,7 @@ def main():
                 st.metric("Goal Status", plan['Status'])
             with plan_cols[1]:
                 st.metric("Required Saving / Month", f"₹{plan['Required Saving per Month']:,.0f}")
-            with plan_Ncols[2]:
+            with plan_cols[2]:
                 st.metric("Disposable Income / Month", f"₹{plan['Disposable Income per Month']:,.0f}")
             
             # Display advice in a color-coded recommendation box
@@ -448,4 +394,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
