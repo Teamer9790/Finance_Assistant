@@ -68,7 +68,7 @@ def add_css(background_video_url: str):
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(180deg, rgba(8,6,23,0.45) 0%, rgba(0,0,0,0.55) 100%);
+            background: linear-gradient(180deg, rgba(8,6,23,0.25) 0%, rgba(0,0,0,0.35) 100%);
             z-index: 1;
             transition: background 300ms ease, opacity 300ms ease;
             pointer-events: none;
@@ -76,13 +76,36 @@ def add_css(background_video_url: str):
 
         /* When the body has class overlay-darker (toggled by JS when spinner present) */
         body.overlay-darker .stApp::before {{
-            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.85) 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%);
         }}
 
         /* Ensure main Streamlit content sits above video and overlay */
         .main, .block-container, .stBlock, .stMarkdown {{
             position: relative;
             z-index: 2;
+        }}
+
+        /* Input fields visibility */
+        input[type="number"], .stNumberInput, .stTextInput {{
+            background: rgba(255, 255, 255, 0.15) !important;
+            backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+        }}
+
+        /* Better visibility for all interactive elements */
+        .stNumberInput > div > div > input {{
+            background: rgba(255, 255, 255, 0.15) !important;
+            color: white !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        }}
+
+        /* Metric boxes */
+        [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {{
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(8px) !important;
+            padding: 8px !important;
+            border-radius: 8px !important;
         }}
 
         /* Headings and text */
@@ -280,11 +303,9 @@ def main():
     scaler, clf, reg, kmeans = st.session_state.models
 
     # Header
-    lottie_finance = load_lottie_url("https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json")
     st.markdown("<h1 style='text-align:center; margin-bottom: 0.2rem;'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
-    if lottie_finance:
-        st_lottie(lottie_finance, speed=1, height=120, key="finance-header")
     st.markdown("<p style='text-align:center; color: rgba(255,255,255,0.85)'>Enter your <b>yearly</b> financial details (in ₹) below for analysis.</p>", unsafe_allow_html=True)
+    st.write("")
 
     # Inputs
     col1, col2 = st.columns(2, gap="large")
