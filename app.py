@@ -270,6 +270,7 @@ def get_recommendations(values, financial_status):
     
     return recs
 
+# ---------------- ANALYSIS (Unchanged logic) ----------------
 # ---------------- ANALYSIS (Corrected) ----------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
     
