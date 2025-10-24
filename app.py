@@ -5,12 +5,21 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.cluster import KMeans
 import plotly.express as px
+from streamlit_lottie import st_lottie
+import requests
+
+# ---------------- LOTTIE UTILS ----------------
+def load_lottie_url(url):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
     page_title="Financial Health Assistant",
     page_icon="💰",
-    layout="wide"  # Use wide layout for a dashboard feel
+    layout="wide"
 )
 
 # ---------------- STYLING (The "Aesthetic" Upgrade) ----------------
@@ -19,10 +28,9 @@ def add_css():
         <style>
         /* --- Base --- */
         body {
-            background-color: #0E1117; /* Fallback */
+            background-color: #0E1117;
         }
         .stApp {
-            /* A clean, professional gradient */
             background: linear-gradient(135deg, #0E1117 0%, #243B55 100%);
             color: #FFFFFF;
         }
@@ -32,8 +40,6 @@ def add_css():
         .stMarkdown, .stNumberInput > label, .stSelectbox > label {
             color: #E0E0E0 !important;
         }
-
-        /* --- Main Title --- */
         .main-title {
             font-size: 3rem;
             font-weight: bold;
@@ -42,8 +48,6 @@ def add_css():
             color: #FFFFFF;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
         }
-        
-        /* --- Input/Output Cards --- */
         .card {
             background-color: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
@@ -52,16 +56,12 @@ def add_css():
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        
-        /* --- Number Inputs --- */
         .stNumberInput input {
             background-color: rgba(0, 0, 0, 0.2);
             color: #FFFFFF;
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
         }
-        
-        /* --- Button --- */
         .stButton > button {
             background: linear-gradient(90deg, #4CAF50, #81C784);
             color: white;
@@ -71,15 +71,13 @@ def add_css():
             font-size: 1.1rem;
             font-weight: bold;
             transition: all 0.3s ease;
-            width: 100%; /* Make button fill its column */
+            width: 100%;
         }
         .stButton > button:hover {
             transform: scale(1.03);
             box-shadow: 0px 5px 15px rgba(76, 175, 80, 0.4);
             opacity: 1;
         }
-        
-        /* --- Metric Cards --- */
         [data-testid="stMetric"] {
             background-color: rgba(255, 255, 255, 0.07);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -89,23 +87,19 @@ def add_css():
         }
         [data-testid="stMetricLabel"] {
             font-size: 1.1rem;
-            color: #A0A0B0; /* Lighter label color */
+            color: #A0A0B0;
         }
         [data-testid="stMetricValue"] {
             font-size: 2.2rem;
             font-weight: bold;
             color: #FFFFFF;
         }
-        /* Color for "Critical" status */
         [data-testid="stMetricValue"] p:contains("Critical") { 
             color: #FF6B6B;
         }
-        /* Color for "Safe" status */
         [data-testid="stMetricValue"] p:contains("Safe") {
             color: #4ECDC4;
         }
-        
-        /* --- Tabs --- */
         .stTabs [data-baseweb="tab"] {
             background-color: transparent;
             color: #A0A0B0;
@@ -116,8 +110,6 @@ def add_css():
             color: #FFFFFF;
             border-bottom: 3px solid #4CAF50;
         }
-
-        /* --- Recommendations (Visible & Viable) --- */
         .recommendation {
             background: rgba(0, 0, 0, 0.2);
             padding: 15px;
@@ -128,11 +120,9 @@ def add_css():
             border-left-width: 6px;
             border-left-style: solid;
         }
-        /* Color-code recommendations */
         .rec-good { border-left-color: #4CAF50; }
         .rec-bad { border-left-color: #F44336; }
         .rec-neutral { border-left-color: #2196F3; }
-
         </style>
         """, unsafe_allow_html=True)
 
@@ -179,8 +169,6 @@ def train_models(df):
 def get_recommendations(values, financial_status):
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
     recs = []
-    
-    # Return a list of dictionaries with text and type
     if loan > (income * 0.5):
         recs.append({"text": "⚠️ High loan burden! Your loan payments are over 50% of your main income. Prioritize reducing this debt or explore refinancing at a lower interest rate.", "type": "bad"})
     else:
@@ -212,7 +200,6 @@ def get_recommendations(values, financial_status):
         recs.append({"text": "⚠️ Your finances are 'Moderate'. You're doing okay but can be improved. Focus on the 'bad' recommendations above to become 'Safe'.", "type": "neutral"})
     else:
         recs.append({"text": "🚨 Your status is 'Critical'. This requires immediate attention. Focus on reducing debt and unnecessary spending to regain control.", "type": "neutral"})
-    
     return recs
 
 # ---------------- ANALYSIS (Updated) ----------------
@@ -223,16 +210,12 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
     cluster = kmeans.predict(scaled)[0]
     cluster_map = {0: "Balanced Saver", 1: "High Spender", 2: "Aggressive Investor"}
     group = cluster_map.get(cluster, "Unknown")
-    
-    # Override group if overspending
     if values[-1] < 0:
         group = "High Spender"
-        
     result = {
         "Financial Status": status,
         "Stability Score": round(score, 2),
         "Group": group,
-        # Pass status directly to get_recommendations
         "Recommendations": get_recommendations(values, status)
     }
     return result
@@ -240,20 +223,16 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
 # ---------------- SAVING PLANNER (Unchanged) ----------------
 def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
     total_income = income + side_income
-    # Assuming all expenses are yearly, divide by 12
     total_monthly_expense = (annual_tax + loan + personal_exp + emergency_exp + main_exp) / 12
     total_monthly_income = total_income / 12
-    
     disposable_income = total_monthly_income - total_monthly_expense
     required_saving = goal_amount / months
-    
     if disposable_income >= required_saving:
         status = "Feasible"
         advice = f"You're on track! Your disposable income of ₹{disposable_income:,.0f}/month is enough to save ₹{required_saving:,.0f}/month."
     else:
         status = "Not Feasible"
         advice = f"This goal is a stretch. Your disposable income is ₹{disposable_income:,.0f}/month, but you need to save ₹{required_saving:,.0f}/month. Look at reducing expenses or increasing income."
-    
     return {
         "Required Saving per Month": round(required_saving),
         "Disposable Income per Month": round(disposable_income),
@@ -264,22 +243,22 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
 # ---------------- MAIN (Completely new layout) ----------------
 def main():
     add_css()
-    
     # --- Load Models (in session state to avoid reloading) ---
     if 'models' not in st.session_state:
         df = generate_data()
         st.session_state.models = train_models(df)
-    
     scaler, clf, reg, kmeans = st.session_state.models
 
+    # ------- Add animated header ---------
+    lottie_finance = load_lottie_url("https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json")
     st.markdown("<h1 class='main-title'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
+    st_lottie(lottie_finance, speed=1, height=160, key="finance-header")
     st.markdown("<p style='text-align: center; font-size: 1.1rem; color: #A0A0B0;'>Enter your <b>yearly</b> financial details (in ₹) below to get a complete analysis and personalized recommendations.</p>", unsafe_allow_html=True)
 
     # --- Input Section ---
     col1, col2 = st.columns(2, gap="large")
     with col1:
         st.header("📝 Your Financials")
-        
         c1, c2 = st.columns(2)
         with c1:
             income = st.number_input("Main Income", min_value=0, value=12_00_000, step=10_000)
@@ -291,14 +270,13 @@ def main():
             personal_exp = st.number_input("Personal Expenses", min_value=0, value=6_00_000, step=10_000)
             emergency_exp = st.number_input("Emergency Fund", min_value=0, value=80_000, step=10_000)
             main_exp = st.number_input("Household Expenses", min_value=0, value=3_50_000, step=10_000)
-        
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
         st.header("🎯 Your Goals")
         goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=1_00_000, step=10_000)
         time_period = st.number_input("Enter time period (months)", min_value=1, value=12, step=1)
-        st.markdown("<br><br><br><br><br>", unsafe_allow_html=True) # Spacer for alignment
+        st.markdown("<br><br><br><br><br>", unsafe_allow_html=True)
         analyze_button = st.button("🔍 Analyze My Finances")
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -306,15 +284,14 @@ def main():
 
     # --- Output Section (only shows after button click) ---
     if analyze_button:
-        # Calculate savings
-        savings = (income + side_income) - (annual_tax + loan + investment + personal_exp + emergency_exp + main_exp)
-        values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
-        
-        # Run analysis
-        result = financial_assistant(values, scaler, clf, reg, kmeans)
-        
-        # Run goal plan
-        plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
+        # Loading animation for analysis
+        lottie_loading = load_lottie_url("https://assets2.lottiefiles.com/private_files/lf30_e3pteeho.json")
+        with st.spinner('Analyzing your financials...'):
+            st_lottie(lottie_loading, speed=1, height=120, key="loading")
+            savings = (income + side_income) - (annual_tax + loan + investment + personal_exp + emergency_exp + main_exp)
+            values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
+            result = financial_assistant(values, scaler, clf, reg, kmeans)
+            plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
 
         # --- Display Metrics ---
         st.header("📈 Your Financial Snapshot")
@@ -335,51 +312,51 @@ def main():
 
         with tab1:
             st.subheader("Expense & Savings Allocation")
-            
             labels = ["Loan", "Investment", "Personal Exp.", "Emergency Fund", "Household Exp.", "Annual Tax"]
             sizes = [loan, investment, personal_exp, emergency_exp, main_exp, annual_tax]
-            
-            # Define a better color scheme
             colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FED766', '#9B59B6', '#F06543']
-            
             if savings > 0:
                 labels.append("Savings")
                 sizes.append(savings)
-                colors.append('#2ECC71') # Green for savings
-            
+                colors.append('#2ECC71')
             df_pie = pd.DataFrame({"Category": labels, "Amount": sizes})
-
-            # The "Better Pie Chart"
             fig = px.pie(df_pie, 
                          names='Category', 
                          values='Amount', 
                          hole=0.6, 
                          color_discrete_sequence=colors)
-            
             fig.update_traces(
                 textposition='inside', 
                 textinfo='percent+label',
-                pull=[0.05 if cat == "Savings" else 0 for cat in labels], # Pull out the Savings slice
-                marker=dict(line=dict(color='#0E1117', width=3)) # Add border to slices
+                pull=[0.05 if cat == "Savings" else 0 for cat in labels],
+                marker=dict(line=dict(color='#0E1117', width=3))
             )
-            
             fig.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
-                showlegend=False, # Legend is redundant with labels on chart
+                showlegend=False,
                 font=dict(color="white", size=14)
             )
             st.plotly_chart(fig, use_container_width=True)
 
         with tab2:
             st.subheader("Your Personalized Recommendations")
-            for rec in result["Recommendations"]:
-                # Use markdown to display styled divs
-                st.markdown(f"<div class='recommendation rec-{rec['type']}'>{rec['text']}</div>", unsafe_allow_html=True)
+            # Animated icons for recommendation types
+            anim_map = {
+                "good": "https://assets9.lottiefiles.com/packages/lf20_4kx2q32n.json",
+                "bad": "https://assets9.lottiefiles.com/packages/lf20_s9b6vh6x.json",
+                "neutral": "https://assets9.lottiefiles.com/packages/lf20_touohxv0.json"
+            }
+            for i, rec in enumerate(result["Recommendations"]):
+                anim = load_lottie_url(anim_map[rec['type']])
+                cols = st.columns([0.13, 0.87])
+                with cols[0]:
+                    st_lottie(anim, height=54, key=f"rec_anim_{i}")
+                with cols[1]:
+                    st.markdown(f"<div class='recommendation rec-{rec['type']}'>{rec['text']}</div>", unsafe_allow_html=True)
 
         with tab3:
             st.subheader(f"Your Goal: Save ₹{goal_amount:,.0f} in {time_period} months")
-            
             plan_cols = st.columns(3)
             with plan_cols[0]:
                 st.metric("Goal Status", plan['Status'])
@@ -387,8 +364,6 @@ def main():
                 st.metric("Required Saving / Month", f"₹{plan['Required Saving per Month']:,.0f}")
             with plan_cols[2]:
                 st.metric("Disposable Income / Month", f"₹{plan['Disposable Income per Month']:,.0f}")
-            
-            # Display advice in a color-coded recommendation box
             advice_type = "good" if plan['Status'] == 'Feasible' else "bad"
             st.markdown(f"<div class='recommendation rec-{advice_type}'>💡 {plan['Advice']}</div>", unsafe_allow_html=True)
 
