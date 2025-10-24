@@ -269,20 +269,33 @@ def get_recommendations(values, financial_status):
         recs.append({"text": "🚨 Your status is 'Critical'. This requires immediate attention. Focus on reducing debt and unnecessary spending to regain control.", "type": "neutral"})
     
     return recs
-
-# ---------------- ANALYSIS (Unchanged logic) ----------------
+# ---------------- ANALYSIS (Corrected) ----------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
-    # The first 8 values are the features, the last is savings
-    features = values[:-1] 
     
-    scaled = scaler.transform([features])
+    # 1. Separate features from the calculated savings (which is the last element)
+    # The features are the first 8 values (income to main_exp)
+    features_list = values[:-1] 
+
+    # 2. DEFINE THE FEATURE NAMES (MUST match the columns used in generate_data/train_models)
+    feature_names = [
+        "income", "side_income", "annual_tax", "loan", 
+        "investment", "personal_exp", "emergency_exp", "main_exp"
+    ]
+    
+    # 3. CONVERT the input list into a NAMED PANDAS DATAFRAME for the scaler/models
+    X_input = pd.DataFrame([features_list], columns=feature_names)
+    
+    # Now, transform() will work because the input has the expected feature names
+    scaled = scaler.transform(X_input) 
+    
+    # The rest of the logic remains the same
     status = clf.predict(scaled)[0]
     score = reg.predict(scaled)[0]
     cluster = kmeans.predict(scaled)[0]
     cluster_map = {0: "Balanced Saver", 1: "High Spender", 2: "Aggressive Investor"}
     group = cluster_map.get(cluster, "Unknown")
     
-    # Override group if overspending
+    # Override group if overspending (using the original values list which includes savings)
     if values[-1] < 0:
         group = "High Spender"
         
@@ -290,7 +303,6 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
         "Financial Status": status,
         "Stability Score": round(score, 2),
         "Group": group,
-        # Pass status directly to get_recommendations
         "Recommendations": get_recommendations(values, status)
     }
     return result
