@@ -8,6 +8,9 @@ import plotly.express as px
 from streamlit_lottie import st_lottie
 import requests
 
+# -------------------------------
+# Load Lottie Animation Function
+# -------------------------------
 def load_lottie_url(url):
     try:
         r = requests.get(url, timeout=5)
@@ -17,19 +20,98 @@ def load_lottie_url(url):
     except Exception:
         return None
 
+# -------------------------------
+# Streamlit Page Config
+# -------------------------------
 st.set_page_config(
     page_title="Financial Health Assistant",
     page_icon="💰",
     layout="wide"
 )
 
+# -------------------------------
+# Add Custom CSS with Background Video
+# -------------------------------
 def add_css():
     st.markdown("""
         <style>
-        /* ... (CSS remains the same as earlier for styling) ... */
+        /* Fullscreen video background */
+        .stApp {
+            position: relative;
+            overflow: hidden;
+        }
+
+        #bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        /* Dark overlay to improve readability */
+        .stApp::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 1;
+        }
+
+        /* Bring content above the background */
+        .main, .block-container {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* White text for visibility */
+        h1, h2, h3, h4, h5, h6, p, label, span, div {
+            color: white !important;
+        }
+
+        /* Style metrics */
+        [data-testid="stMetricValue"] {
+            color: #00FFAA !important;
+        }
+
+        /* Tabs styling */
+        .stTabs [role="tab"] {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin-right: 5px;
+            padding: 8px 20px;
+        }
+        .stTabs [role="tab"]:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        /* Recommendation box styling */
+        .recommendation {
+            padding: 10px 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        .rec-good { background-color: rgba(46, 204, 113, 0.2); }
+        .rec-bad { background-color: rgba(231, 76, 60, 0.2); }
+        .rec-neutral { background-color: rgba(52, 152, 219, 0.2); }
         </style>
+
+        <!-- Background video -->
+        <video autoplay muted loop id="bg-video">
+            <source src="https://cdn.pixabay.com/video/2024/02/04/199285-909903160_large.mp4" type="video/mp4">
+        </video>
         """, unsafe_allow_html=True)
 
+# -------------------------------
+# Generate Synthetic Financial Data
+# -------------------------------
 def generate_data(n_samples=200):
     np.random.seed(48)
     data = {
@@ -56,6 +138,9 @@ def generate_data(n_samples=200):
     df["stability_score"] = np.random.randint(20, 100, n_samples)
     return df
 
+# -------------------------------
+# Train ML Models
+# -------------------------------
 def train_models(df):
     X = df.drop(["status", "stability_score"], axis=1)
     y_class = df["status"]
@@ -67,6 +152,9 @@ def train_models(df):
     kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
     return scaler, clf, reg, kmeans
 
+# -------------------------------
+# Recommendations System
+# -------------------------------
 def get_recommendations(values, financial_status):
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
     recs = []
@@ -98,6 +186,9 @@ def get_recommendations(values, financial_status):
         recs.append({"text": "🚨 Status is 'Critical'. Reduce debt urgently.", "type": "neutral"})
     return recs
 
+# -------------------------------
+# Financial Assistant Model
+# -------------------------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
     scaled = scaler.transform([values])
     status = clf.predict(scaled)[0]
@@ -114,6 +205,9 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
         "Recommendations": get_recommendations(values, status)
     }
 
+# -------------------------------
+# Goal Planning
+# -------------------------------
 def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
     total_income = income + side_income
     total_monthly_expense = (annual_tax + loan + personal_exp + emergency_exp + main_exp) / 12
@@ -133,18 +227,25 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
         "Advice": advice
     }
 
+# -------------------------------
+# Main Streamlit App
+# -------------------------------
 def main():
     add_css()
+
     if 'models' not in st.session_state:
         df = generate_data()
         st.session_state.models = train_models(df)
+
     scaler, clf, reg, kmeans = st.session_state.models
 
+    # Header Animation
     lottie_finance = load_lottie_url("https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json")
-    st.markdown("<h1 class='main-title'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
     if lottie_finance:
         st_lottie(lottie_finance, speed=1, height=160, key="finance-header")
-    st.markdown("<p style='text-align: center; font-size: 1.1rem; color: #A0A0B0;'>Enter your <b>yearly</b> financial details (in ₹) below for analysis.</p>", unsafe_allow_html=True)
+
+    st.markdown("<p style='text-align:center; font-size:1.1rem; color:#DDD;'>Enter your <b>yearly</b> financial details (in ₹) below for analysis.</p>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2, gap="large")
     with col1:
@@ -175,6 +276,7 @@ def main():
         with st.spinner('Analyzing your financials...'):
             if lottie_loading:
                 st_lottie(lottie_loading, speed=1, height=120, key="loading")
+
             savings = (income + side_income) - (annual_tax + loan + investment + personal_exp + emergency_exp + main_exp)
             values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
             result = financial_assistant(values, scaler, clf, reg, kmeans)
@@ -190,8 +292,7 @@ def main():
             st.metric("Primary Group", result['Group'])
         with metric_cols[3]:
             savings_text = f"₹{savings:,.0f}"
-            savings_delta = "Above Zero" if savings >= 0 else "Below Zero"
-            st.metric("Estimated Yearly Savings", savings_text, delta_color="normal" if savings >= 0 else "inverse")
+            st.metric("Estimated Yearly Savings", savings_text)
 
         tab1, tab2, tab3 = st.tabs(["📊 Expense Breakdown", "💡 Recommendations", "🎯 Goal Planner"])
 
@@ -205,23 +306,9 @@ def main():
                 sizes.append(savings)
                 colors.append('#2ECC71')
             df_pie = pd.DataFrame({"Category": labels, "Amount": sizes})
-            fig = px.pie(df_pie,
-                         names='Category',
-                         values='Amount',
-                         hole=0.6,
-                         color_discrete_sequence=colors)
-            fig.update_traces(
-                textposition='inside',
-                textinfo='percent+label',
-                pull=[0.05 if cat == "Savings" else 0 for cat in labels],
-                marker=dict(line=dict(color='#0E1117', width=3))
-            )
-            fig.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                showlegend=False,
-                font=dict(color="white", size=14)
-            )
+            fig = px.pie(df_pie, names='Category', values='Amount', hole=0.6, color_discrete_sequence=colors)
+            fig.update_traces(textposition='inside', textinfo='percent+label')
+            fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white", size=14))
             st.plotly_chart(fig, use_container_width=True)
 
         with tab2:
@@ -252,5 +339,8 @@ def main():
             advice_type = "good" if plan['Status'] == 'Feasible' else "bad"
             st.markdown(f"<div class='recommendation rec-{advice_type}'>💡 {plan['Advice']}</div>", unsafe_allow_html=True)
 
+# -------------------------------
+# Run the App
+# -------------------------------
 if __name__ == "__main__":
     main()
