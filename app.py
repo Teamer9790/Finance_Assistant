@@ -1,320 +1,148 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.cluster import KMeans
-import plotly.express as px
-from streamlit_lottie import st_lottie
-import requests
 
-# -------------------------------
-# Streamlit Page Config
-# -------------------------------
-st.set_page_config(
-    page_title="Financial Health Assistant",
-    page_icon="💰",
-    layout="wide"
-)
+# -----------------------------
+# 🎨 PAGE CONFIGURATION
+# -----------------------------
+st.set_page_config(page_title="Financial Health Assistant", layout="wide")
 
-# -------------------------------
-# Custom CSS + Background Video + Cinematic Fade
-# -------------------------------
+# -----------------------------
+# 🌈 CUSTOM CSS FOR BACKGROUND + STYLE
+# -----------------------------
 def add_css():
     st.markdown("""
         <style>
-        /* -------------------- BACKGROUND VIDEO -------------------- */
+        /* Gradient background (purple → black) */
         .stApp {
-            position: relative;
+            background: linear-gradient(135deg, #3a0ca3, #000000);
+            background-attachment: fixed;
+            color: white;
+            font-family: 'Poppins', sans-serif;
             overflow: hidden;
-            animation: fadeInApp 1.8s ease-in-out forwards;
+            animation: fadeInApp 1.2s ease-in-out forwards;
         }
 
-        #bg-video {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
-            z-index: 0;
-            opacity: 0;
-            animation: fadeInVideo 2s ease-in forwards;
-        }
-
-        /* Dark overlay for contrast */
-        .stApp::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.55);
-            z-index: 1;
-            animation: fadeInOverlay 2.5s ease-in forwards;
-        }
-
-        /* Ensure app content is above video */
-        .main, .block-container {
+        /* Container styling */
+        .block-container {
+            padding-top: 3rem;
+            padding-bottom: 3rem;
             position: relative;
             z-index: 2;
         }
 
-        /* -------------------- TEXT COLORS -------------------- */
-        h1, h2, h3, h4, h5, h6, p, label, span, div {
-            color: white !important;
+        /* Headings */
+        h1, h2, h3, h4, h5, h6 {
+            color: #ffffff !important;
+            text-shadow: 0px 0px 10px rgba(186, 85, 211, 0.6);
         }
 
-        /* -------------------- METRICS -------------------- */
-        [data-testid="stMetricValue"] {
-            color: #00FFAA !important;
+        /* Paragraphs and labels */
+        p, label, span, div {
+            color: #f1f1f1 !important;
         }
 
-        /* -------------------- TABS -------------------- */
-        .stTabs [role="tab"] {
-            background-color: rgba(255,255,255,0.1);
+        /* Input fields */
+        .stTextInput>div>div>input,
+        .stNumberInput>div>div>input {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
             border-radius: 10px;
-            margin-right: 5px;
-            padding: 8px 20px;
-            transition: all 0.3s ease;
-        }
-        .stTabs [role="tab"]:hover {
-            background-color: rgba(255,255,255,0.25);
         }
 
-        /* -------------------- RECOMMENDATION BOXES -------------------- */
-        .recommendation {
-            padding: 10px 16px;
+        /* Buttons */
+        div.stButton>button {
+            background: linear-gradient(90deg, #7209b7, #3a0ca3);
+            color: white;
+            border: none;
             border-radius: 12px;
-            margin-bottom: 10px;
+            padding: 0.6rem 1.2rem;
             font-size: 1rem;
-            line-height: 1.5;
-            backdrop-filter: blur(8px);
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(114, 9, 183, 0.6);
+            transition: 0.3s ease-in-out;
         }
-        .rec-good { background-color: rgba(46, 204, 113, 0.25); }
-        .rec-bad { background-color: rgba(231, 76, 60, 0.25); }
-        .rec-neutral { background-color: rgba(52, 152, 219, 0.25); }
-
-        /* -------------------- SPINNER -------------------- */
-        .stSpinner > div {
-            border-top-color: #b388ff !important;
-            border-right-color: #a678ff !important;
-            border-bottom-color: #9370ff !important;
-            border-left-color: #855cff !important;
-            animation: spinFade 2s linear infinite;
+        div.stButton>button:hover {
+            background: linear-gradient(90deg, #b5179e, #560bad);
+            box-shadow: 0 0 25px rgba(181, 23, 158, 0.8);
+            transform: scale(1.03);
         }
 
-        /* -------------------- ANIMATIONS -------------------- */
-        @keyframes fadeInVideo {
-            from { opacity: 0; transform: scale(1.05); }
-            to { opacity: 1; transform: scale(1); }
+        /* Cards or results */
+        .result-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0px 0px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(6px);
         }
+
+        /* Fade animation */
         @keyframes fadeInApp {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes fadeInOverlay {
-            from { opacity: 0; }
-            to { opacity: 0.55; }
-        }
-        @keyframes spinFade {
-            0% { opacity: 0.3; transform: rotate(0deg); }
-            50% { opacity: 1; }
-            100% { opacity: 0.3; transform: rotate(360deg); }
+            from {opacity: 0;}
+            to {opacity: 1;}
         }
         </style>
+    """, unsafe_allow_html=True)
 
-        <!-- Background video -->
-        <video autoplay muted loop id="bg-video">
-            <source src="https://cdn.pixabay.com/video/2023/05/12/163277-825844251_large.mp4" type="video/mp4">
-        </video>
-        """, unsafe_allow_html=True)
+add_css()
 
-# -------------------------------
-# Generate Synthetic Data
-# -------------------------------
-def generate_data(n_samples=200):
-    np.random.seed(48)
-    data = {
-        "income": np.random.randint(200000, 1000000, n_samples),
-        "side_income": np.random.randint(0, 100000, n_samples),
-        "annual_tax": np.random.randint(10000, 50000, n_samples),
-        "loan": np.random.randint(20000, 500000, n_samples),
-        "investment": np.random.randint(5000, 80000, n_samples),
-        "personal_exp": np.random.randint(50000, 250000, n_samples),
-        "emergency_exp": np.random.randint(5000, 50000, n_samples),
-        "main_exp": np.random.randint(50000, 200000, n_samples)
-    }
-    df = pd.DataFrame(data)
-    df["savings"] = (
-        df["income"] + df["side_income"]
-        - (df["annual_tax"] + df["loan"] + df["investment"] +
-           df["personal_exp"] + df["emergency_exp"] + df["main_exp"])
-    )
-    df["status"] = np.where(
-        (df["loan"] > df["income"] * 0.7) | (df["personal_exp"] > df["income"] * 0.8),
-        "Critical",
-        np.where(df["investment"] > df["income"] * 0.2, "Safe", "Moderate")
-    )
-    df["stability_score"] = np.random.randint(20, 100, n_samples)
-    return df
+# -----------------------------
+# 🧮 APP LOGIC
+# -----------------------------
+st.title("💰 Financial Health Assistant")
+st.markdown("Analyze your financial health and get personalized recommendations.")
 
-# -------------------------------
-# ML Model Training
-# -------------------------------
-def train_models(df):
-    X = df.drop(["status", "stability_score"], axis=1)
-    y_class = df["status"]
-    y_reg = df["stability_score"]
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    clf = RandomForestClassifier(random_state=42).fit(X_scaled, y_class)
-    reg = RandomForestRegressor(random_state=42).fit(X_scaled, y_reg)
-    kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X_scaled)
-    return scaler, clf, reg, kmeans
+st.write("---")
 
-# -------------------------------
-# Recommendation System
-# -------------------------------
-def get_recommendations(values, financial_status):
-    income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
-    recs = []
-    if loan > (income * 0.5):
-        recs.append({"text": "⚠️ High loan burden! Reduce or refinance debt.", "type": "bad"})
+col1, col2 = st.columns(2)
+
+with col1:
+    income = st.number_input("Monthly Income ($)", min_value=0.0, step=100.0)
+    expenses = st.number_input("Monthly Expenses ($)", min_value=0.0, step=100.0)
+    savings = st.number_input("Current Savings ($)", min_value=0.0, step=100.0)
+
+with col2:
+    debt = st.number_input("Total Debt ($)", min_value=0.0, step=100.0)
+    goals = st.text_input("Financial Goal (e.g., Buy a house, Save for college)")
+    risk = st.select_slider("Risk Tolerance", ["Low", "Moderate", "High"])
+
+st.write("")
+analyze = st.button("🔍 Analyze My Finances")
+
+if analyze:
+    st.markdown("<div class='result-box'>", unsafe_allow_html=True)
+
+    if income == 0:
+        st.error("Please enter a valid income to continue.")
     else:
-        recs.append({"text": "✅ Loan levels are manageable.", "type": "good"})
-    if investment < (income * 0.1):
-        recs.append({"text": "📈 Increase investments — currently below 10% of income.", "type": "bad"})
-    else:
-        recs.append({"text": "✅ Strong investment ratio.", "type": "good"})
-    if emergency_exp < (income * 0.05):
-        recs.append({"text": "🚨 Emergency fund too low — aim for 5% of income.", "type": "bad"})
-    else:
-        recs.append({"text": "✅ Emergency fund is solid.", "type": "good"})
-    if (personal_exp + main_exp) > (income + side_income) * 0.6:
-        recs.append({"text": "💸 Expenses high — try cutting unnecessary costs.", "type": "bad"})
-    else:
-        recs.append({"text": "✅ Expense ratio is healthy.", "type": "good"})
-    if savings < 0:
-        recs.append({"text": "🚨 Overspending! You're spending more than you earn.", "type": "bad"})
-    else:
-        recs.append({"text": "💰 Great job maintaining savings!", "type": "good"})
-    recs.append({"text": f"🎯 Financial Status: {financial_status}", "type": "neutral"})
-    return recs
+        saving_rate = ((income - expenses) / income) * 100
+        debt_ratio = (debt / income) * 100
 
-# -------------------------------
-# Financial Assistant Function
-# -------------------------------
-def financial_assistant(values, scaler, clf, reg, kmeans):
-    scaled = scaler.transform([values])
-    status = clf.predict(scaled)[0]
-    score = reg.predict(scaled)[0]
-    cluster = kmeans.predict(scaled)[0]
-    cluster_map = {0: "Balanced Saver", 1: "High Spender", 2: "Aggressive Investor"}
-    group = cluster_map.get(cluster, "Unknown")
-    if values[-1] < 0:
-        group = "High Spender"
-    return {
-        "Financial Status": status,
-        "Stability Score": round(score, 2),
-        "Group": group,
-        "Recommendations": get_recommendations(values, status)
-    }
+        st.subheader("📊 Your Financial Overview")
+        st.write(f"**Saving Rate:** {saving_rate:.2f}%")
+        st.write(f"**Debt-to-Income Ratio:** {debt_ratio:.2f}%")
 
-# -------------------------------
-# Goal Saving Planner
-# -------------------------------
-def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
-    total_income = income + side_income
-    total_monthly_expense = (annual_tax + loan + personal_exp + emergency_exp + main_exp) / 12
-    disposable_income = (total_income / 12) - total_monthly_expense
-    required_saving = goal_amount / months
-    if disposable_income >= required_saving:
-        status = "Feasible"
-        advice = f"✅ You can reach your goal! Disposable income ₹{disposable_income:,.0f}/mo covers ₹{required_saving:,.0f}/mo."
-    else:
-        status = "Not Feasible"
-        advice = f"⚠️ Disposable ₹{disposable_income:,.0f}/mo, need ₹{required_saving:,.0f}/mo — cut expenses or increase income."
-    return {
-        "Required Saving per Month": round(required_saving),
-        "Disposable Income per Month": round(disposable_income),
-        "Status": status,
-        "Advice": advice
-    }
+        if saving_rate > 20:
+            st.success("✅ Excellent! You’re saving a healthy portion of your income.")
+        elif 10 <= saving_rate <= 20:
+            st.info("🟡 You’re doing okay — try to increase your savings slightly.")
+        else:
+            st.warning("🔴 You’re saving too little. Cut expenses or find ways to boost income.")
 
-# -------------------------------
-# MAIN APP
-# -------------------------------
-def main():
-    add_css()
+        if debt_ratio > 40:
+            st.error("⚠️ High debt level! Try to reduce your liabilities.")
+        else:
+            st.success("💸 Your debt level is manageable.")
 
-    if 'models' not in st.session_state:
-        df = generate_data()
-        st.session_state.models = train_models(df)
+        st.write("---")
+        st.subheader("🎯 Recommendation")
+        if risk == "Low":
+            st.write("→ Consider stable, low-risk investments like bonds or high-yield savings.")
+        elif risk == "Moderate":
+            st.write("→ A balanced portfolio of index funds and ETFs may suit you.")
+        else:
+            st.write("→ You could explore higher-risk, higher-return options like stocks or crypto (cautiously).")
 
-    scaler, clf, reg, kmeans = st.session_state.models
+        st.write(f"🎯 Financial Goal: *{goals if goals else 'No goal entered'}*")
 
-    st.markdown("<h1 style='text-align:center;'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;'>Cinematic background + intelligent finance insights</p>", unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.header("🧾 Financial Inputs")
-        income = st.number_input("Main Income (₹)", min_value=0, value=300000, step=10000)
-        side_income = st.number_input("Side Income (₹)", min_value=0, value=10000, step=10000)
-        annual_tax = st.number_input("Annual Tax (₹)", min_value=0, value=20000, step=5000)
-        loan = st.number_input("Loan Payments (₹)", min_value=0, value=90000, step=10000)
-        investment = st.number_input("Investments (₹)", min_value=0, value=10000, step=5000)
-        personal_exp = st.number_input("Personal Expenses (₹)", min_value=0, value=100000, step=10000)
-        emergency_exp = st.number_input("Emergency Fund (₹)", min_value=0, value=15000, step=5000)
-        main_exp = st.number_input("Household Expenses (₹)", min_value=0, value=80000, step=10000)
-
-    with col2:
-        st.header("🎯 Goal Planner")
-        goal_amount = st.number_input("Goal Amount (₹)", min_value=0, value=50000, step=10000)
-        months = st.number_input("Months to Reach Goal", min_value=1, value=6, step=1)
-        analyze = st.button("🔍 Analyze My Finances")
-
-    if analyze:
-        with st.spinner("Analyzing your financial data..."):
-            savings = (income + side_income) - (annual_tax + loan + investment + personal_exp + emergency_exp + main_exp)
-            values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
-            result = financial_assistant(values, scaler, clf, reg, kmeans)
-            plan = goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
-
-        st.divider()
-        st.header("📊 Financial Overview")
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Status", result["Financial Status"])
-        c2.metric("Stability Score", f"{result['Stability Score']}%")
-        c3.metric("Group", result["Group"])
-        c4.metric("Savings", f"₹{savings:,.0f}")
-
-        tab1, tab2, tab3 = st.tabs(["💡 Recommendations", "📈 Expense Breakdown", "🎯 Goal Planner"])
-
-        with tab1:
-            for rec in result["Recommendations"]:
-                st.markdown(f"<div class='recommendation rec-{rec['type']}'>{rec['text']}</div>", unsafe_allow_html=True)
-
-        with tab2:
-            df_pie = pd.DataFrame({
-                "Category": ["Loan", "Investment", "Personal Exp.", "Emergency Fund", "Household Exp.", "Annual Tax", "Savings"],
-                "Amount": [loan, investment, personal_exp, emergency_exp, main_exp, annual_tax, max(savings, 0)]
-            })
-            fig = px.pie(df_pie, names='Category', values='Amount', hole=0.6)
-            fig.update_traces(textinfo='percent+label')
-            fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(color="white"))
-            st.plotly_chart(fig, use_container_width=True)
-
-        with tab3:
-            st.metric("Goal Status", plan["Status"])
-            st.metric("Required Saving / Month", f"₹{plan['Required Saving per Month']:,.0f}")
-            st.metric("Disposable Income / Month", f"₹{plan['Disposable Income per Month']:,.0f}")
-            st.markdown(f"<div class='recommendation rec-{'good' if plan['Status']=='Feasible' else 'bad'}'>{plan['Advice']}</div>", unsafe_allow_html=True)
-
-# -------------------------------
-# RUN
-# -------------------------------
-if __name__ == "__main__":
-    main()
+    st.markdown("</div>", unsafe_allow_html=True)
