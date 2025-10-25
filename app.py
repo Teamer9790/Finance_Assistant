@@ -552,30 +552,6 @@ def main():
             plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
 
         st.header("📈 ML-Powered Financial Analysis")
-        
-        # Show prediction confidence
-        conf_cols = st.columns([1, 2, 1])
-        with conf_cols[1]:
-            st.write("**ML Model Confidence:**")
-            conf_df = pd.DataFrame({
-                'Status': ['Critical', 'Moderate', 'Safe'],
-                'Confidence': [result['Confidence']['Critical'], 
-                             result['Confidence']['Moderate'], 
-                             result['Confidence']['Safe']]
-            })
-            fig_conf = px.bar(conf_df, x='Status', y='Confidence', 
-                            color='Status',
-                            color_discrete_map={'Critical': '#e74c3c', 'Moderate': '#f39c12', 'Safe': '#2ecc71'})
-            fig_conf.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)", 
-                plot_bgcolor="rgba(0,0,0,0.2)", 
-                font=dict(color="white"),
-                showlegend=False,
-                height=250
-            )
-            st.plotly_chart(fig_conf, use_container_width=True)
-        
-        st.write("")
         metric_cols = st.columns(4)
         with metric_cols[0]:
             status_emoji = {"Critical": "🚨", "Moderate": "⚠️", "Safe": "✅"}
