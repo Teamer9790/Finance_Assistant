@@ -33,11 +33,8 @@ st.set_page_config(
 # CSS + Background Video + Spinner overlay behavior
 # -------------------------------
 def add_css(background_video_url: str):
-    # This CSS creates a video background (full-screen), an overlay for readability,
-    # and a small JS MutationObserver to darken the overlay while a Streamlit spinner is present.
     st.markdown(f"""
         <style>
-        /* App container */
         .stApp {{
             position: relative;
             overflow: hidden;
@@ -45,7 +42,6 @@ def add_css(background_video_url: str):
             animation: fadeInApp 1.2s ease-in-out forwards;
         }}
 
-        /* Background video (fixed full-screen) */
         #bg-video {{
             position: fixed;
             top: 0;
@@ -57,10 +53,9 @@ def add_css(background_video_url: str):
             opacity: 1;
             pointer-events: none;
             filter: saturate(1) contrast(0.95);
-            transform: translateZ(0); /* help with some rendering issues */
+            transform: translateZ(0);
         }}
 
-        /* Overlay to improve contrast and readability */
         .stApp::before {{
             content: "";
             position: fixed;
@@ -74,12 +69,10 @@ def add_css(background_video_url: str):
             pointer-events: none;
         }}
 
-        /* When the body has class overlay-darker (toggled by JS when spinner present) */
         body.overlay-darker .stApp::before {{
             background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%);
         }}
 
-        /* Ensure main Streamlit content sits above video and overlay */
         .main, .block-container, .stBlock, .stMarkdown, 
         .stNumberInput, .stButton, .stMetric, .stTabs, 
         section[data-testid="stSidebar"], 
@@ -90,7 +83,6 @@ def add_css(background_video_url: str):
             opacity: 1 !important;
         }}
 
-        /* Input fields visibility */
         input[type="number"], .stNumberInput, .stTextInput {{
             background: rgba(255, 255, 255, 0.15) !important;
             backdrop-filter: blur(10px) !important;
@@ -100,7 +92,6 @@ def add_css(background_video_url: str):
             opacity: 1 !important;
         }}
 
-        /* Better visibility for all interactive elements */
         .stNumberInput > div > div > input {{
             background: rgba(255, 255, 255, 0.15) !important;
             color: white !important;
@@ -108,7 +99,6 @@ def add_css(background_video_url: str):
             visibility: visible !important;
         }}
 
-        /* Make sure columns are visible */
         [data-testid="column"] {{
             background: rgba(0, 0, 0, 0.3) !important;
             padding: 20px !important;
@@ -116,7 +106,6 @@ def add_css(background_video_url: str):
             backdrop-filter: blur(10px) !important;
         }}
 
-        /* Metric boxes */
         [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {{
             background: rgba(255, 255, 255, 0.08) !important;
             backdrop-filter: blur(8px) !important;
@@ -124,13 +113,11 @@ def add_css(background_video_url: str):
             border-radius: 8px !important;
         }}
 
-        /* Headings and text */
         h1, h2, h3, h4, h5, h6, p, label, span, div {{
             color: #fff !important;
             text-shadow: 0 1px 10px rgba(0,0,0,0.45);
         }}
 
-        /* Buttons styling */
         div.stButton > button {{
             background: linear-gradient(90deg,#6a0dad,#3a0ca3);
             color: white;
@@ -144,7 +131,6 @@ def add_css(background_video_url: str):
             box-shadow: 0 10px 28px rgba(58,12,163,0.35);
         }}
 
-        /* Recommendation box styles */
         .recommendation {{
             padding: 12px 16px;
             border-radius: 12px;
@@ -157,13 +143,11 @@ def add_css(background_video_url: str):
         .rec-bad {{ border-left: 4px solid #e74c3c; }}
         .rec-neutral {{ border-left: 4px solid #3498db; }}
 
-        /* Animations */
         @keyframes fadeInApp {{
             from {{ opacity: 0; transform: translateY(6px); }}
             to   {{ opacity: 1; transform: translateY(0); }}
         }}
 
-        /* Spinner color tweak (makes spinner glow purple-ish) */
         .stSpinner > div {{
             border-top-color: #b388ff !important;
             border-right-color: #9b59ff !important;
@@ -172,14 +156,11 @@ def add_css(background_video_url: str):
         }}
         </style>
 
-        <!-- Background video element -->
         <video autoplay muted loop playsinline id="bg-video">
             <source src="{background_video_url}" type="video/mp4">
-            <!-- fallback message -->
         </video>
 
         <script>
-        // MutationObserver to detect Streamlit spinner and toggle a darker overlay
         (function() {{
             const observer = new MutationObserver(() => {{
                 const spinner = document.querySelector('.stSpinner');
@@ -192,7 +173,6 @@ def add_css(background_video_url: str):
 
             observer.observe(document.body, {{ childList: true, subtree: true }});
 
-            // Initial check (in case spinner exists already)
             if (document.querySelector('.stSpinner')) {{
                 document.body.classList.add('overlay-darker');
             }}
@@ -201,7 +181,7 @@ def add_css(background_video_url: str):
     """, unsafe_allow_html=True)
 
 # -------------------------------
-# Synthetic data + models (same robust logic as before)
+# Synthetic data + models
 # -------------------------------
 def generate_data(n_samples=200):
     np.random.seed(48)
@@ -241,6 +221,37 @@ def train_models(df):
     return scaler, clf, reg, kmeans
 
 # -------------------------------
+# FIXED: Determine user group based on actual behavior
+# -------------------------------
+def determine_user_group(income, side_income, investment, personal_exp, main_exp, savings):
+    """
+    Classify user into one of three groups based on their actual financial behavior:
+    - Balanced Saver: Good savings rate, moderate spending
+    - High Spender: High expenses relative to income, low/negative savings
+    - Aggressive Investor: High investment relative to income
+    """
+    total_income = income + side_income
+    total_expenses = personal_exp + main_exp
+    
+    # Calculate key ratios
+    savings_rate = (savings / total_income * 100) if total_income > 0 else 0
+    investment_rate = (investment / total_income * 100) if total_income > 0 else 0
+    expense_rate = (total_expenses / total_income * 100) if total_income > 0 else 0
+    
+    # Classification logic based on financial behavior
+    # High Spender: Spending over 70% of income OR negative savings OR very low savings rate
+    if expense_rate > 70 or savings < 0 or savings_rate < 5:
+        return "High Spender"
+    
+    # Aggressive Investor: Investment is 15% or more of income AND savings rate is decent
+    elif investment_rate >= 15 and savings_rate >= 10:
+        return "Aggressive Investor"
+    
+    # Balanced Saver: Good savings rate, moderate spending and investing
+    else:
+        return "Balanced Saver"
+
+# -------------------------------
 # Recommendation logic & assistant
 # -------------------------------
 def get_recommendations(values, financial_status):
@@ -270,14 +281,15 @@ def get_recommendations(values, financial_status):
     return recs
 
 def financial_assistant(values, scaler, clf, reg, kmeans):
+    income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
+    
     scaled = scaler.transform([values])
     status = clf.predict(scaled)[0]
     score = reg.predict(scaled)[0]
-    cluster = kmeans.predict(scaled)[0]
-    cluster_map = {0: "Balanced Saver", 1: "High Spender", 2: "Aggressive Investor"}
-    group = cluster_map.get(cluster, "Unknown")
-    if values[-1] < 0:
-        group = "High Spender"
+    
+    # Use the new rule-based classification instead of K-means clustering
+    group = determine_user_group(income, side_income, investment, personal_exp, main_exp, savings)
+    
     return {
         "Financial Status": status,
         "Stability Score": round(score, 2),
@@ -307,23 +319,19 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
 # Main app
 # -------------------------------
 def main():
-    # Use the new background video URL
     background_video_url = "https://cdn.pixabay.com/video/2022/08/16/128098-740186760_large.mp4"
     add_css(background_video_url)
 
-    # Initialize or load models in session state
     if 'models' not in st.session_state:
         df = generate_data()
         st.session_state.models = train_models(df)
 
     scaler, clf, reg, kmeans = st.session_state.models
 
-    # Header
     st.markdown("<h1 style='text-align:center; margin-bottom: 0.2rem;'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color: rgba(255,255,255,0.85)'>Enter your <b>yearly</b> financial details (in ₹) below for analysis.</p>", unsafe_allow_html=True)
     st.write("")
 
-    # Inputs
     col1, col2 = st.columns(2, gap="large")
     with col1:
         st.header("📝 Your Financials")
