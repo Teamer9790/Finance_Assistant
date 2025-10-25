@@ -9,7 +9,7 @@ from streamlit_lottie import st_lottie
 import requests
 
 # -------------------------------
-# Lottie loader (safe helper)
+# Lottie loader
 # -------------------------------
 def load_lottie_url(url):
     try:
@@ -30,22 +30,16 @@ st.set_page_config(
 )
 
 # -------------------------------
-# CSS + Background Video + Spinner overlay behavior
+# CSS + Background Video
 # -------------------------------
 def add_css(background_video_url: str):
-    # This CSS creates a video background (full-screen), an overlay for readability,
-    # and a small JS MutationObserver to darken the overlay while a Streamlit spinner is present.
     st.markdown(f"""
         <style>
-        /* App container */
         .stApp {{
             position: relative;
             overflow: hidden;
             min-height: 100vh;
-            animation: fadeInApp 1.2s ease-in-out forwards;
         }}
-
-        /* Background video (fixed full-screen) */
         #bg-video {{
             position: fixed;
             top: 0;
@@ -54,13 +48,7 @@ def add_css(background_video_url: str):
             height: 100vh;
             object-fit: cover;
             z-index: 0;
-            opacity: 1;
-            pointer-events: none;
-            filter: saturate(1) contrast(0.95);
-            transform: translateZ(0); /* help with some rendering issues */
         }}
-
-        /* Overlay to improve contrast and readability */
         .stApp::before {{
             content: "";
             position: fixed;
@@ -68,69 +56,17 @@ def add_css(background_video_url: str):
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(180deg, rgba(8,6,23,0.25) 0%, rgba(0,0,0,0.35) 100%);
+            background: linear-gradient(180deg, rgba(20,0,40,0.6) 0%, rgba(0,0,0,0.8) 100%);
             z-index: 1;
-            transition: background 300ms ease, opacity 300ms ease;
-            pointer-events: none;
         }}
-
-        /* When the body has class overlay-darker (toggled by JS when spinner present) */
-        body.overlay-darker .stApp::before {{
-            background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%);
+        .main, .block-container, .stMarkdown, .stButton, .stNumberInput {{
+            position: relative;
+            z-index: 2;
         }}
-
-        /* Ensure main Streamlit content sits above video and overlay */
-        .main, .block-container, .stBlock, .stMarkdown, 
-        .stNumberInput, .stButton, .stMetric, .stTabs, 
-        section[data-testid="stSidebar"], 
-        div[data-testid="column"] {{
-            position: relative !important;
-            z-index: 2 !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }}
-
-        /* Input fields visibility */
-        input[type="number"], .stNumberInput, .stTextInput {{
-            background: rgba(255, 255, 255, 0.15) !important;
-            backdrop-filter: blur(10px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            color: white !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }}
-
-        /* Better visibility for all interactive elements */
-        .stNumberInput > div > div > input {{
-            background: rgba(255, 255, 255, 0.15) !important;
-            color: white !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            visibility: visible !important;
-        }}
-
-        /* Make sure columns are visible */
-        [data-testid="column"] {{
-            background: rgba(0, 0, 0, 0.3) !important;
-            padding: 20px !important;
-            border-radius: 15px !important;
-            backdrop-filter: blur(10px) !important;
-        }}
-
-        /* Metric boxes */
-        [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {{
-            background: rgba(255, 255, 255, 0.08) !important;
-            backdrop-filter: blur(8px) !important;
-            padding: 8px !important;
-            border-radius: 8px !important;
-        }}
-
-        /* Headings and text */
-        h1, h2, h3, h4, h5, h6, p, label, span, div {{
+        h1, h2, h3, p, label, span {{
             color: #fff !important;
-            text-shadow: 0 1px 10px rgba(0,0,0,0.45);
+            text-shadow: 0 1px 8px rgba(0,0,0,0.5);
         }}
-
-        /* Buttons styling */
         div.stButton > button {{
             background: linear-gradient(90deg,#6a0dad,#3a0ca3);
             color: white;
@@ -143,65 +79,20 @@ def add_css(background_video_url: str):
             transform: translateY(-2px);
             box-shadow: 0 10px 28px rgba(58,12,163,0.35);
         }}
-
-        /* Recommendation box styles */
-        .recommendation {{
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            backdrop-filter: blur(6px);
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.05);
-        }}
-        .rec-good {{ border-left: 4px solid #2ecc71; }}
-        .rec-bad {{ border-left: 4px solid #e74c3c; }}
-        .rec-neutral {{ border-left: 4px solid #3498db; }}
-
-        /* Animations */
-        @keyframes fadeInApp {{
-            from {{ opacity: 0; transform: translateY(6px); }}
-            to   {{ opacity: 1; transform: translateY(0); }}
-        }}
-
-        /* Spinner color tweak (makes spinner glow purple-ish) */
-        .stSpinner > div {{
-            border-top-color: #b388ff !important;
-            border-right-color: #9b59ff !important;
-            border-bottom-color: #8a2be2 !important;
-            border-left-color: #7b1fa2 !important;
+        [data-testid="column"] {{
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
         }}
         </style>
-
-        <!-- Background video element -->
         <video autoplay muted loop playsinline id="bg-video">
             <source src="{background_video_url}" type="video/mp4">
-            <!-- fallback message -->
         </video>
-
-        <script>
-        // MutationObserver to detect Streamlit spinner and toggle a darker overlay
-        (function() {{
-            const observer = new MutationObserver(() => {{
-                const spinner = document.querySelector('.stSpinner');
-                if (spinner) {{
-                    document.body.classList.add('overlay-darker');
-                }} else {{
-                    document.body.classList.remove('overlay-darker');
-                }}
-            }});
-
-            observer.observe(document.body, {{ childList: true, subtree: true }});
-
-            // Initial check (in case spinner exists already)
-            if (document.querySelector('.stSpinner')) {{
-                document.body.classList.add('overlay-darker');
-            }}
-        }})();
-        </script>
     """, unsafe_allow_html=True)
 
 # -------------------------------
-# Synthetic data + models (same robust logic as before)
+# Synthetic data + models
 # -------------------------------
 def generate_data(n_samples=200):
     np.random.seed(48)
@@ -241,7 +132,7 @@ def train_models(df):
     return scaler, clf, reg, kmeans
 
 # -------------------------------
-# Recommendation logic & assistant
+# Recommendation logic
 # -------------------------------
 def get_recommendations(values, financial_status):
     income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
@@ -269,15 +160,26 @@ def get_recommendations(values, financial_status):
     recs.append({"text": f"🎯 Financial Status: {financial_status}", "type": "neutral"})
     return recs
 
+# -------------------------------
+# Improved grouping logic
+# -------------------------------
 def financial_assistant(values, scaler, clf, reg, kmeans):
+    income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings = values
     scaled = scaler.transform([values])
     status = clf.predict(scaled)[0]
     score = reg.predict(scaled)[0]
     cluster = kmeans.predict(scaled)[0]
-    cluster_map = {0: "Balanced Saver", 1: "High Spender", 2: "Aggressive Investor"}
-    group = cluster_map.get(cluster, "Unknown")
-    if values[-1] < 0:
+
+    # Smart financial behavior labeling
+    if savings < 0:
         group = "High Spender"
+    elif investment > (income * 0.25):
+        group = "Aggressive Investor"
+    elif savings > (income * 0.2):
+        group = "Balanced Saver"
+    else:
+        group = "Moderate Planner"
+
     return {
         "Financial Status": status,
         "Stability Score": round(score, 2),
@@ -285,6 +187,9 @@ def financial_assistant(values, scaler, clf, reg, kmeans):
         "Recommendations": get_recommendations(values, status)
     }
 
+# -------------------------------
+# Goal saving plan
+# -------------------------------
 def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp):
     total_income = income + side_income
     total_monthly_expense = (annual_tax + loan + personal_exp + emergency_exp + main_exp) / 12
@@ -292,7 +197,7 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
     required_saving = goal_amount / months
     if disposable_income >= required_saving:
         status = "Feasible"
-        advice = f"✅ You can reach your goal! Disposable income ₹{disposable_income:,.0f}/mo covers ₹{required_saving:,.0f}/mo."
+        advice = f"✅ You can reach your goal! Disposable ₹{disposable_income:,.0f}/mo covers ₹{required_saving:,.0f}/mo."
     else:
         status = "Not Feasible"
         advice = f"⚠️ Disposable ₹{disposable_income:,.0f}/mo, need ₹{required_saving:,.0f}/mo — cut expenses or increase income."
@@ -307,23 +212,19 @@ def goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan,
 # Main app
 # -------------------------------
 def main():
-    # Use the new background video URL
-    background_video_url = "https://cdn.pixabay.com/video/2022/08/16/128098-740186760_large.mp4"
+    background_video_url = "https://motionbgs.com/media/5348/abstract-color-lines.960x540.mp4"
     add_css(background_video_url)
 
-    # Initialize or load models in session state
     if 'models' not in st.session_state:
         df = generate_data()
         st.session_state.models = train_models(df)
 
     scaler, clf, reg, kmeans = st.session_state.models
 
-    # Header
-    st.markdown("<h1 style='text-align:center; margin-bottom: 0.2rem;'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color: rgba(255,255,255,0.85)'>Enter your <b>yearly</b> financial details (in ₹) below for analysis.</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;'>💰 Financial Health Assistant</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;color:#ccc'>Enter your yearly financial details (₹)</p>", unsafe_allow_html=True)
     st.write("")
 
-    # Inputs
     col1, col2 = st.columns(2, gap="large")
     with col1:
         st.header("📝 Your Financials")
@@ -341,74 +242,48 @@ def main():
 
     with col2:
         st.header("🎯 Your Goals")
-        goal_amount = st.number_input("Enter goal amount (₹)", min_value=0, value=50000, step=5000)
-        time_period = st.number_input("Enter time period (months)", min_value=1, value=6, step=1)
-        st.write("")
-        analyze_button = st.button("🔍 Analyze My Finances")
+        goal_amount = st.number_input("Goal Amount (₹)", min_value=0, value=50000, step=5000)
+        months = st.number_input("Time Period (months)", min_value=1, value=6, step=1)
+        analyze = st.button("🔍 Analyze My Finances")
 
     st.divider()
 
-    if analyze_button:
+    if analyze:
         with st.spinner('Analyzing your financials...'):
             savings = (income + side_income) - (annual_tax + loan + investment + personal_exp + emergency_exp + main_exp)
             values = [income, side_income, annual_tax, loan, investment, personal_exp, emergency_exp, main_exp, savings]
             result = financial_assistant(values, scaler, clf, reg, kmeans)
-            plan = goal_saving_plan(goal_amount, time_period, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
+            plan = goal_saving_plan(goal_amount, months, income, side_income, annual_tax, loan, personal_exp, emergency_exp, main_exp)
 
         st.header("📈 Your Financial Snapshot")
-        metric_cols = st.columns(4)
-        with metric_cols[0]:
-            st.metric("Financial Status", result['Financial Status'])
-        with metric_cols[1]:
-            st.metric("Stability Score", f"{result['Stability Score']}%")
-        with metric_cols[2]:
-            st.metric("Primary Group", result['Group'])
-        with metric_cols[3]:
-            savings_text = f"₹{savings:,.0f}"
-            st.metric("Estimated Yearly Savings", savings_text)
+        cols = st.columns(4)
+        cols[0].metric("Financial Status", result['Financial Status'])
+        cols[1].metric("Stability Score", f"{result['Stability Score']}%")
+        cols[2].metric("Group", result['Group'])
+        cols[3].metric("Estimated Savings", f"₹{savings:,.0f}")
 
-        tab1, tab2, tab3 = st.tabs(["📊 Expense Breakdown", "💡 Recommendations", "🎯 Goal Planner"])
+        tab1, tab2, tab3 = st.tabs(["📊 Breakdown", "💡 Recommendations", "🎯 Goal Planner"])
 
         with tab1:
-            st.subheader("Expense & Savings Allocation")
             labels = ["Loan", "Investment", "Personal Exp.", "Emergency Fund", "Household Exp.", "Annual Tax"]
             sizes = [loan, investment, personal_exp, emergency_exp, main_exp, annual_tax]
             if savings > 0:
                 labels.append("Savings")
                 sizes.append(savings)
-            df_pie = pd.DataFrame({"Category": labels, "Amount": sizes})
-            fig = px.pie(df_pie, names='Category', values='Amount', hole=0.6)
+            fig = px.pie(pd.DataFrame({"Category": labels, "Amount": sizes}), names='Category', values='Amount', hole=0.6)
             fig.update_traces(textposition='inside', textinfo='percent+label')
-            fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white", size=14))
+            fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(color="white"))
             st.plotly_chart(fig, use_container_width=True)
 
         with tab2:
-            st.subheader("Your Personalized Recommendations")
-            anim_map = {
-                "good": "https://assets9.lottiefiles.com/packages/lf20_4kx2q32n.json",
-                "bad": "https://assets9.lottiefiles.com/packages/lf20_s9b6vh6x.json",
-                "neutral": "https://assets9.lottiefiles.com/packages/lf20_touohxv0.json"
-            }
             for i, rec in enumerate(result["Recommendations"]):
-                anim = load_lottie_url(anim_map.get(rec['type']))
-                cols = st.columns([0.14, 0.86])
-                with cols[0]:
-                    if anim:
-                        st_lottie(anim, height=54, key=f"rec_anim_{i}")
-                with cols[1]:
-                    st.markdown(f"<div class='recommendation rec-{rec['type']}'>{rec['text']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='margin-bottom:8px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.05);border-left:4px solid #6a0dad;'>{rec['text']}</div>", unsafe_allow_html=True)
 
         with tab3:
-            st.subheader(f"Your Goal: Save ₹{goal_amount:,.0f} in {time_period} months")
-            plan_cols = st.columns(3)
-            with plan_cols[0]:
-                st.metric("Goal Status", plan['Status'])
-            with plan_cols[1]:
-                st.metric("Required Saving / Month", f"₹{plan['Required Saving per Month']:,.0f}")
-            with plan_cols[2]:
-                st.metric("Disposable Income / Month", f"₹{plan['Disposable Income per Month']:,.0f}")
-            advice_type = "good" if plan['Status'] == 'Feasible' else "bad"
-            st.markdown(f"<div class='recommendation rec-{advice_type}'>💡 {plan['Advice']}</div>", unsafe_allow_html=True)
+            st.metric("Goal Status", plan['Status'])
+            st.metric("Required Saving / Month", f"₹{plan['Required Saving per Month']:,.0f}")
+            st.metric("Disposable Income / Month", f"₹{plan['Disposable Income per Month']:,.0f}")
+            st.markdown(f"<div style='background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;'>{plan['Advice']}</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
